@@ -8,8 +8,8 @@ import tempfile
 from fabric.api import run, sudo
 from fabric.context_managers import documented_contextmanager
 
-from dockerfabric.utils.output import single_line_stdout
 from dockermap.shortcuts import rm, chmod, chown
+from .output import single_line_stdout
 
 
 _safe_name = lambda tarinfo: tarinfo.name[0] != '/' and not '..' in tarinfo.name

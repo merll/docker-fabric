@@ -6,7 +6,7 @@ from fabric.api import cd, env, run, sudo, task
 from dockermap.shortcuts import curl, untargz
 from utils.files import temp_dir
 from utils.users import assign_user_groups
-from .fabricapi import DockerFabricClient, ContainerFabric
+from .apiclient import DockerFabricClient
 
 
 SOCAT_URL = 'http://www.dest-unreach.org/socat/download/socat-{0}.tar.gz'

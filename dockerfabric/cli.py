@@ -7,7 +7,7 @@ import posixpath
 from fabric.api import cd, get, run, sudo
 
 from dockermap.shortcuts import chmod, chown, targz
-from utils.files import temp_dir, is_directory
+from .utils.files import temp_dir, is_directory
 
 
 def copy_resource(container, resource, local_filename, contents_only=True):
