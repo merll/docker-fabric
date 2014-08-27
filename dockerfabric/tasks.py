@@ -18,7 +18,7 @@ def install_docker():
     sudo('echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list')
     sudo('apt-get update')
     sudo('apt-get -y install lxc-docker')
-    assign_user_groups('$LOGNAME', ['docker'])
+    assign_user_groups(env.user, ['docker'])
 
 
 @task

@@ -1,8 +1,8 @@
 docker-fabric
 =============
 
-Integration of Docker into Fabric.
-----------------------------------
+Integration for Docker into Fabric.
+-----------------------------------
 
 Overview
 --------
