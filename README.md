@@ -4,19 +4,22 @@ docker-fabric
 Integration for Docker into Fabric.
 -----------------------------------
 
+Project: https://github.com/merll/docker-fabric
+
+
 Overview
---------
+========
 With a few preparations, Docker images can easily be generated and tested on development
 machines, and transferred on to a production environment.  This package is based on
-`docker-map`, and helps to use Docker on Fabric-based deployments. Wherever possible, the
-Remote API is used; for certain features (e.g. extracting container contents) the Docker
-command-line interface (CLI) is used.
+[`docker-map`](https://github.com/merll/docker-map), and helps to use Docker on
+Fabric-based deployments. Wherever possible, the Remote API is used; for certain features
+(e.g. extracting container contents) the Docker command-line interface (CLI) is used.
 
 API access
-----------
+==========
 
 `DockerFabricClient`
-====================
+--------------------
 An implementation of `docker-map`'s `DockerClientWrapper`. Adds Fabric-like logging in
 the context of container instances on top of Fabric hosts, and enables automatic
 creation of tunnel connections for access to a remote Docker host using Fabric's SSH
@@ -28,11 +31,11 @@ have already done that, you can still use a local SSH tunnel for avoiding exposi
 Docker outside of `localhost`, as that is not recommended.
 
 `ContainerFabric`
-=================
+-----------------
 Simple wrapper for `docker-map`'s `MappingClient` to `DockerFabricClient`.
 
 Command-line based access
-=========================
+-------------------------
 Provides the following features by running the appropriate commands on a remote Docker
 command line:
 * Copy resources from a container to a Fabric host.
@@ -43,7 +46,7 @@ Remote API currently does not support creating compressed tarballs.
 creating compressed tarballs, but is capable of importing them.
 
 Tasks
------
+=====
 The following tasks are included in this package, that can be run by Fabric directly:
 * `install_docker`: Install Docker on a remote machine (to be adapted to more
 distributions). Uses the latest released version for Ubuntu.
@@ -58,15 +61,16 @@ or other dependent images.
 
 
 Contributions
--------------
-Thanks to ... for publishing an implementation for a local tunnel to a Fabric client
-in the following pull request.
+=============
+Thanks to [lfasnacht](https://github.com/lfasnacht) for publishing an implementation for
+a local tunnel to a Fabric client in the [pull request 939 of Fabric]
+(https://github.com/fabric/fabric/pull/939).
 
-Once it has become a part of Fabric, it may be removed from this package.
+Once it has been merged into Fabric, it may be removed from this package.
 
 
 Todo
-----
+====
 * Use Fabric's connection cache and re-use existing tunnels.
 * More detailed documentation.
 * Unit tests.
