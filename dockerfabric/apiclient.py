@@ -6,11 +6,24 @@ from docker import client as docker
 from fabric.api import env
 
 from dockermap.map import base, client
-from .socat import SocketTunnel
-from .tunnel import LocalTunnel
+from .socat import socat_tunnels
+from .tunnel import local_tunnels
 
 
 DOCKER_LOG_FORMAT = "[{0}] docker: {1}"
+
+
+class DockerFabricConnections(dict):
+    def get_connection(self):
+        key = env.host_string, env.docker_base_url
+        conn = self.get(key)
+        if not conn:
+            conn = DockerFabricClient()
+            self[key] = conn
+        return conn
+
+
+docker_fabric = DockerFabricConnections().get_connection
 
 
 class DockerFabricClient(base.DockerClientWrapper):
@@ -49,10 +62,9 @@ class DockerFabricClient(base.DockerClientWrapper):
             p1, __, p2 = url.partition(':')
             remote_host = p2 or p1
             if url.startswith('http+unix:') or url.startswith('unix:') or url.startswith('/'):
-                self._tunnel = SocketTunnel(remote_host, remote_port, local_port)
+                self._tunnel = socat_tunnels[(remote_host, remote_port, local_port)]
             else:
-                self._tunnel = LocalTunnel(remote_port, remote_host, local_port)
-            self._tunnel.connect()
+                self._tunnel = local_tunnels[(remote_port, remote_host, local_port)]
             conn_url = ':'.join(('tcp://127.0.0.1', six.text_type(local_port)))
         else:
             self._socket_tunnel = None
@@ -142,11 +154,10 @@ class DockerFabricClient(base.DockerClientWrapper):
 
 class ContainerFabric(client.MappingDockerClient):
     def __init__(self, container_map):
-        super(ContainerFabric, self).__init__(container_map, DockerFabricClient())
+        super(ContainerFabric, self).__init__(container_map, docker_fabric())
 
     def __enter__(self):
-        self._client.__enter__()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._client.__exit__(exc_type, exc_val, exc_tb)
+        pass

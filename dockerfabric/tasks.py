@@ -6,7 +6,7 @@ from fabric.api import cd, env, run, sudo, task
 from dockermap.shortcuts import curl, untargz
 from utils.files import temp_dir
 from utils.users import assign_user_groups
-from .apiclient import DockerFabricClient
+from .apiclient import DockerFabricClient, docker_fabric
 
 
 SOCAT_URL = 'http://www.dest-unreach.org/socat/download/socat-{0}.tar.gz'
@@ -36,35 +36,29 @@ def build_socat():
 
 @task
 def check_version():
-    with DockerFabricClient() as c:
-        print(c.version())
+    print(docker_fabric().version())
 
 
 @task
 def list_images():
-    with DockerFabricClient() as c:
-        print(c.images())
+    print(docker_fabric().images())
 
 
 @task
 def list_containers(all=True):
-    with DockerFabricClient() as c:
-        print(c.containers(all=all))
+    print(docker_fabric().containers(all=all))
 
 
 @task
 def cleanup_containers():
-    with DockerFabricClient() as c:
-        c.cleanup_containers()
+    docker_fabric().cleanup_containers()
 
 
 @task
 def cleanup_images():
-    with DockerFabricClient() as c:
-        c.cleanup_images()
+    docker_fabric().cleanup_images()
 
 
 @task
 def remove_all_containers():
-    with DockerFabricClient() as c:
-        c.remove_all_containers()
+    docker_fabric().remove_all_containers()

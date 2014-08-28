@@ -9,6 +9,21 @@ from fabric.state import connections, env
 from fabric.thread_handling import ThreadHandler
 
 
+class LocalTunnels(dict):
+    def __getitem__(self, item):
+        remote_host, remote_port, bind_port, bind_host = item
+        key = remote_host, remote_port
+        tun = self.get(key)
+        if not tun:
+            tun = LocalTunnel(remote_port, remote_host, bind_port, bind_host)
+            tun.connect()
+            self[key] = tun
+        return tun
+
+
+local_tunnels = LocalTunnels()
+
+
 def _forwarder(chan, sock):
     # Bidirectionally forward data between a socket and a Paramiko channel.
     try:

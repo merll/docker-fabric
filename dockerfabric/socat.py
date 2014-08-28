@@ -7,6 +7,21 @@ from fabric.state import env, connections
 from .tunnel import LocalTunnel
 
 
+class SocketTunnels(dict):
+    def __getitem__(self, item):
+        remote_socket, remote_port, local_port = item
+        key = env.host_string, remote_socket
+        svc = self.get(key)
+        if not svc:
+            svc = SocketTunnel(remote_socket, remote_port, local_port)
+            svc.connect()
+            self[key] = svc
+        return svc
+
+
+socat_tunnels = SocketTunnels()
+
+
 class SocatService(object):
     def __init__(self, dest, src, quiet=False):
         self.dest = dest

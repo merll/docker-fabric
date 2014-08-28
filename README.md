@@ -71,6 +71,5 @@ Once it has been merged into Fabric, it may be removed from this package.
 
 Todo
 ====
-* Use Fabric's connection cache and re-use existing tunnels.
 * More detailed documentation.
 * Unit tests.
