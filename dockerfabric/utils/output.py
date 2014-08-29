@@ -6,10 +6,10 @@ from fabric.context_managers import hide
 from fabric.utils import error
 
 
-def stdout_result(cmd, expected_errors=(), shell=True, sudo=False):
+def stdout_result(cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
     which = operations.sudo if sudo else operations.run
     with hide('warnings'):
-        result = which(cmd, shell=shell, warn_only=True)
+        result = which(cmd, shell=shell, quiet=quiet, warn_only=True)
     if result.return_code == 0:
         return result
 
@@ -29,6 +29,5 @@ def check_int(value):
 
 single_line = lambda val: val.split('\n')[0] if val is not None else None
 
-single_line_stdout = lambda cmd, expected_errors=(), shell=True, sudo=False:\
-    single_line(stdout_result(cmd, expected_errors, shell, sudo))
-
+single_line_stdout = lambda cmd, expected_errors=(), shell=True, sudo=False, quiet=False:\
+    single_line(stdout_result(cmd, expected_errors, shell, sudo, quiet))

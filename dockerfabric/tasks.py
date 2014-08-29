@@ -5,8 +5,10 @@ from fabric.api import cd, env, run, sudo, task
 
 from dockermap.shortcuts import curl, untargz
 from utils.files import temp_dir
+from utils.net import get_ip4_address
 from utils.users import assign_user_groups
-from .apiclient import DockerFabricClient, docker_fabric
+from . import DEFAULT_SOCAT_VERSION
+from .apiclient import docker_fabric
 
 
 SOCAT_URL = 'http://www.dest-unreach.org/socat/download/socat-{0}.tar.gz'
@@ -24,9 +26,10 @@ def install_docker():
 @task
 def build_socat():
     with temp_dir() as remote_tmp:
-        src_dir = '{0}/socat-{1}'.format(remote_tmp, env.socat_version)
+        socat_version = env.get('socat_version', DEFAULT_SOCAT_VERSION)
+        src_dir = '{0}/socat-{1}'.format(remote_tmp, socat_version)
         src_file = '.'.join((src_dir, 'tar.gz'))
-        run(curl(SOCAT_URL.format(env.socat_version), src_file))
+        run(curl(SOCAT_URL.format(socat_version), src_file))
         run(untargz(src_file, remote_tmp))
         with cd(src_dir):
             run('./configure')
@@ -37,6 +40,11 @@ def build_socat():
 @task
 def check_version():
     print(docker_fabric().version())
+
+
+@task
+def get_ip(interface_name='docker0'):
+    print(get_ip4_address(interface_name))
 
 
 @task
