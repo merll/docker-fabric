@@ -28,7 +28,7 @@ def remove_ignore(path, use_sudo=False):
 
 
 def is_directory(path, use_sudo=False):
-    result = single_line_stdout('if [[ -f {0} ]]; then echo 0; elif [[ -d {0} ]]; then echo 1; else echo -1; fi'.format(path), sudo=use_sudo)
+    result = single_line_stdout('if [[ -f {0} ]]; then echo 0; elif [[ -d {0} ]]; then echo 1; else echo -1; fi'.format(path), sudo=use_sudo, quiet=True)
     if result == '0':
         return False
     elif result == '1':
