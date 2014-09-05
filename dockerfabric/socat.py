@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import six
 from fabric.state import env, connections
 
 from .tunnel import LocalTunnel
@@ -43,8 +42,8 @@ class SocatService(object):
 
 class SocketTunnel(LocalTunnel):
     def __init__(self, remote_socket, remote_port, local_port, quiet=False):
-        dest = ':'.join(('TCP-LISTEN', six.text_type(remote_port)))
-        src = ':'.join(('UNIX-CONNECT', six.text_type(remote_socket)))
+        dest = 'TCP-LISTEN:{0},fork,reuseaddr'.format(remote_port)
+        src = 'UNIX-CONNECT:{0}'.format(remote_socket)
         self.socat_service = SocatService(dest, src, quiet)
         super(SocketTunnel, self).__init__(remote_port, bind_port=local_port)
 
