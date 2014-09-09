@@ -54,7 +54,11 @@ class DockerFabricClient(base.DockerClientWrapper):
     """
     def __init__(self, base_url=None, version=None, timeout=None, tunnel_remote_port=None, tunnel_local_port=None, **kwargs):
         remote_port = tunnel_remote_port or env.get('docker_tunnel_remote_port')
-        local_port = tunnel_local_port or env.get('docker_tunnel_local_port', remote_port)
+        if not tunnel_local_port:
+            local_port = env.get('docker_tunnel_local_port', remote_port)
+            env.docker_tunnel_local_port = int(local_port) + 1
+        else:
+            local_port = tunnel_local_port
         url = base_url or env.get('docker_base_url')
         api_version = version or env.get('docker_api_version', docker.DEFAULT_DOCKER_API_VERSION)
         client_timeout = timeout or env.get('docker_timeout', docker.DEFAULT_TIMEOUT_SECONDS)
