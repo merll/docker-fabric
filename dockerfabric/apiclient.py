@@ -123,6 +123,19 @@ class DockerFabricClient(base.DockerClientWrapper):
         self.push_log("Fetching image '{0}' from registry.".format(image))
         return super(DockerFabricClient, self).import_image(image=image, tag=tag, **kwargs)
 
+    def login(self, username=None, password=None, email=None, registry=None, reauth=False):
+        c_user = username or env.get('docker_registry_user')
+        c_pass = password or env.get('docker_registry_password')
+        c_mail = email or env.get('docker_registry_mail')
+        c_registry = registry or env.get('docker_registry_repository')
+        registry_url = 'https://{0}'.format(c_registry)
+        result = super(DockerFabricClient, self).login(c_user, c_pass, c_mail, registry_url, reauth=reauth)
+        if result.get('Status') == 'Login Succeeded':
+            self.push_log("Login at registry '{0}' succeeded.".format(c_registry))
+            return True
+        self.push_log("Login at registry '{0}' failed.".format(c_registry))
+        return False
+
     def remove_all_containers(self):
         self.push_log("Fetching container list.")
         super(DockerFabricClient, self).remove_all_containers()
