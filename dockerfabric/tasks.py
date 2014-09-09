@@ -7,7 +7,7 @@ from dockermap.shortcuts import curl, untargz
 from utils.files import temp_dir
 from utils.net import get_ip4_address
 from utils.users import assign_user_groups
-from . import DEFAULT_SOCAT_VERSION
+from . import DEFAULT_SOCAT_VERSION, cli
 from .apiclient import docker_fabric
 
 
@@ -25,6 +25,8 @@ def install_docker():
 
 @task
 def build_socat():
+    sudo('apt-get update')
+    sudo('apt-get -y install gcc make')
     with temp_dir() as remote_tmp:
         socat_version = env.get('socat_version', DEFAULT_SOCAT_VERSION)
         src_dir = '{0}/socat-{1}'.format(remote_tmp, socat_version)
@@ -70,3 +72,15 @@ def cleanup_images():
 @task
 def remove_all_containers():
     docker_fabric().remove_all_containers()
+
+
+@task
+def save_image(image, filename=None):
+    local_name = filename or '{0}.tar.gz'.format(image)
+    cli.save_image(image, local_name)
+
+
+@task
+def load_image(filename):
+    with open(filename, 'r') as f:
+        docker_fabric().load_image(f)
