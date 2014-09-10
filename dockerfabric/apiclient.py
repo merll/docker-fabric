@@ -127,18 +127,27 @@ class DockerFabricClient(base.DockerClientWrapper):
         self.push_log("Fetching image '{0}' from registry.".format(image))
         return super(DockerFabricClient, self).import_image(image=image, tag=tag, **kwargs)
 
-    def login(self, username=None, password=None, email=None, registry=None, reauth=False):
-        c_user = username or env.get('docker_registry_user')
-        c_pass = password or env.get('docker_registry_password')
-        c_mail = email or env.get('docker_registry_mail')
-        c_registry = registry or env.get('docker_registry_repository')
-        registry_url = 'https://{0}'.format(c_registry)
-        result = super(DockerFabricClient, self).login(c_user, c_pass, c_mail, registry_url, reauth=reauth)
-        if result.get('Status') == 'Login Succeeded':
+    def login(self, **kwargs):
+        c_user = kwargs.pop('username', env.get('docker_registry_user'))
+        c_pass = kwargs.pop('password', env.get('docker_registry_password'))
+        c_mail = kwargs.pop('email', env.get('docker_registry_mail'))
+        c_registry = kwargs.pop('registry', env.get('docker_registry_repository'))
+        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
+        if super(DockerFabricClient, self).login(c_user, password=c_pass, email=c_mail, registry=c_registry,
+                                                 insecure_registry=c_insecure, **kwargs):
             self.push_log("Login at registry '{0}' succeeded.".format(c_registry))
             return True
         self.push_log("Login at registry '{0}' failed.".format(c_registry))
         return False
+
+    def pull(self, repository, tag=None, stream=True, **kwargs):
+        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
+        return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream, insecure_registry=c_insecure,
+                                                    **kwargs)
+
+    def push(self, repository, stream=True, **kwargs):
+        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
+        return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure, **kwargs)
 
     def remove_all_containers(self):
         self.push_log("Fetching container list.")
