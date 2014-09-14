@@ -5,11 +5,14 @@ import os
 import posixpath
 
 from fabric.api import cd, get, run, sudo
+from fabric.network import needs_host
 
 from dockermap.shortcuts import chmod, chown, targz
+from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
 
 
+@needs_host
 def copy_resource(container, resource, local_filename, contents_only=True):
     with temp_dir() as remote_tmp:
         base_name = os.path.basename(resource)
@@ -29,6 +32,7 @@ def copy_resource(container, resource, local_filename, contents_only=True):
         get(archive_path, local_filename)
 
 
+@needs_host
 def copy_resources(src_container, src_resources, storage_dir, dst_directories={}, apply_chown=None, apply_chmod=None):
     def _copy_resource(resource):
         default_dest_path = generic_path if generic_path is not None else resource
@@ -46,6 +50,7 @@ def copy_resources(src_container, src_resources, storage_dir, dst_directories={}
         sudo(chown(apply_chown, storage_dir))
 
 
+@needs_host
 def isolate_and_get(src_container, src_resources, local_dst_dir, **kwargs):
     with temp_dir() as remote_tmp:
         copy_path = posixpath.join(remote_tmp, 'copy_tmp')
@@ -56,6 +61,7 @@ def isolate_and_get(src_container, src_resources, local_dst_dir, **kwargs):
         get(archive_path, local_dst_dir)
 
 
+@needs_host
 def isolate_to_image(src_container, src_resources, dst_image, **kwargs):
     with temp_dir() as remote_tmp:
         copy_resources(src_container, src_resources, remote_tmp, **kwargs)
@@ -63,8 +69,16 @@ def isolate_to_image(src_container, src_resources, dst_image, **kwargs):
             sudo('tar -cz * | docker import - {0}'.format(dst_image))
 
 
+@needs_host
 def save_image(image, local_filename):
     with temp_dir() as remote_tmp:
         archive = posixpath.join(remote_tmp, 'image_{0}.tar.gz'.format(image))
         run('docker save {0} | gzip --stdout > {1}'.format(image, archive), shell=False)
         get(archive, local_filename)
+
+
+@needs_host
+def flatten_image(image, dest_image=None, no_op_cmd='/bin/true', create_kwargs={}, start_kwargs={}):
+    dest_image = dest_image or image
+    with temp_container(image, no_op_cmd=no_op_cmd, create_kwargs=create_kwargs, start_kwargs=start_kwargs) as c:
+        run('docker export {0} | docker import - {1}'.format(c, dest_image), shell=False)
