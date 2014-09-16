@@ -21,6 +21,9 @@ setup(
     version=__version__,
     packages=find_packages(),
     install_requires=['six', 'Fabric>=1.8.0', 'docker-py>=0.5.0', 'docker-map>=0.1.1'],
+    extras_require = {
+        'yaml':  ['PyYAML'],
+    },
     license='MIT',
     author='Matthias Erll',
     author_email='matthias@erll.de',
