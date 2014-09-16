@@ -5,7 +5,7 @@ Welcome to Docker-Fabric's documentation!
 =========================================
 
 Docker-Fabric provides a set of utilities for controlling Docker on a local test machine or a remote production
-environment. It combines Fabric_, extensions to docker-py_ in docker-map_.
+environment. It combines Fabric_ with extensions to docker-py_ in Docker-Map_.
 
 The project is hosted on GitHub_.
 
@@ -25,6 +25,8 @@ Contents
    :maxdepth: 2
 
    installation
+   start
+   api/modules
 
 
 Status
@@ -43,5 +45,5 @@ Indices and tables
 
 .. _Fabric: http://www.fabfile.org
 .. _docker-py: https://github.com/docker/docker-py
-.. _docker-map: https://github.com/merll/docker-map
+.. _Docker-Map: https://github.com/merll/docker-map
 .. _GitHub: https://github.com/merll/docker-fabric

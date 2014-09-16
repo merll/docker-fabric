@@ -30,25 +30,25 @@ class DockerFabricClient(base.DockerClientWrapper):
     """
     Docker client for Fabric.
 
-    For functional enhancements to :class:`docker.client.Client`, see :class:`.client.DockerClientWrapper`.
+    For functional enhancements to :class:`docker.client.Client`, see :class:`~dockermap.map.base.DockerClientWrapper`.
     This implementation only adds the possibility to build a tunnel through the current SSH connection and adds
     Fabric-usual logging.
 
     If a unix socket is used, `socat` will be started on the remote side to redirect it to a TCP port.
 
-    :param base_url: URL to connect to; if not set, will try to use `env.docker_base_url`.
+    :param base_url: URL to connect to; if not set, will try to use ``env.docker_base_url``.
     :type base_url: unicode
-    :param version: API version; if not set, will try to use `env.docker_api_version`; otherwise defaults to
-     :const:`docker.client.DEFAULT_DOCKER_API_VERSION`.
-    :param version: unicode
-    :param timeout: Client timeout for Docker; if not set, will try to use `env.docker_timeout`; otherwise defaults to
-     :const:`docker.client.DEFAULT_TIMEOUT_SECONDS`.
+    :param version: API version; if not set, will try to use ``env.docker_api_version``; otherwise defaults to
+     :const:`~docker.client.DEFAULT_DOCKER_API_VERSION`.
+    :type version: unicode
+    :param timeout: Client timeout for Docker; if not set, will try to use ``env.docker_timeout``; otherwise defaults to
+     :const:`~docker.client.DEFAULT_TIMEOUT_SECONDS`.
     :type timeout: int
     :param tunnel_remote_port: Optional, for SSH tunneling: Port to open on the remote end for the tunnel; if set to
-     `None`, will try to use `env.docker_tunnel_remote_port`; otherwise defaults to `None` for no tunnel.
+     ``None``, will try to use ``env.docker_tunnel_remote_port``; otherwise defaults to ``None`` for no tunnel.
     :type tunnel_remote_port: int
     :param tunnel_local_port: Optional, for SSH tunneling: Port to open towards the local end for the tunnel; if set to
-     `None`, will try to use `env.docker_tunnel_local_port`; otherwise defaults to the value of `tunnel_remote_port`.
+     ``None``, will try to use ``env.docker_tunnel_local_port``; otherwise defaults to the value of ``tunnel_remote_port``.
     :type tunnel_local_port: int
     :param kwargs: Additional kwargs for :class:`docker.client.Client`
     """
@@ -95,39 +95,76 @@ class DockerFabricClient(base.DockerClientWrapper):
                 self._tunnel.close()
 
     def build(self, tag, **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.build` with additional logging.
+        """
         self.push_log("Building image '{0}'.".format(tag))
         return super(DockerFabricClient, self).build(tag, **kwargs)
 
     def create_container(self, image, name=None, **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.create_container` with additional logging.
+        """
         name_str = " '{0}'".format(name) if name else ""
         self.push_log("Creating container{0} from image '{1}'.".format(name_str, image))
         return super(DockerFabricClient, self).create_container(image, name=name, **kwargs)
 
     def copy_resource(self, container, resource, local_filename):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        """
         self.push_log("Receiving tarball for resource '{0}:{1}' and storing as {2}".format(container, resource, local_filename))
         super(DockerFabricClient, self).copy_resource(container, resource, local_filename)
 
     def cleanup_containers(self):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        """
         self.push_log("Generating list of stopped containers.")
         super(DockerFabricClient, self).cleanup_containers()
 
     def cleanup_images(self):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        """
         self.push_log("Checking images for dependent images and containers.")
         super(DockerFabricClient, self).cleanup_images()
 
     def get_container_names(self):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        """
         self.push_log("Fetching container list.")
         return super(DockerFabricClient, self).get_container_names()
 
     def get_image_tags(self):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        """
         self.push_log("Fetching image list.")
         return super(DockerFabricClient, self).get_image_tags()
 
     def import_image(self, image, tag='latest', **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        """
         self.push_log("Fetching image '{0}' from registry.".format(image))
         return super(DockerFabricClient, self).import_image(image=image, tag=tag, **kwargs)
 
     def login(self, **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.login` with two enhancements:
+
+        * additional logging;
+        * login parameters can be passed through ``kwargs``, or set as default using the following ``env``
+          variables:
+
+          * ``env.docker_registry_user`` (kwarg: ``username``),
+          * ``env.docker_registry_password`` (kwarg: ``password``),
+          * ``env.docker_registry_mail`` (kwarg: ``email``),
+          * ``env.docker_registry_repository`` (kwarg: ``registry``),
+          * ``env.docker_registry_insecure`` (kwarg: ``insecure_registry``).
+        """
         c_user = kwargs.pop('username', env.get('docker_registry_user'))
         c_pass = kwargs.pop('password', env.get('docker_registry_password'))
         c_mail = kwargs.pop('email', env.get('docker_registry_mail'))
@@ -141,39 +178,74 @@ class DockerFabricClient(base.DockerClientWrapper):
         return False
 
     def pull(self, repository, tag=None, stream=True, **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.pull` with two enhancements:
+
+        * additional logging;
+        * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
+          ``env.docker_registry_insecure``.
+        """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
         return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream, insecure_registry=c_insecure,
                                                     **kwargs)
 
     def push(self, repository, stream=True, **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.push` with two enhancements:
+
+        * additional logging;
+        * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
+          ``env.docker_registry_insecure``.
+        """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
         return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure, **kwargs)
 
     def remove_all_containers(self):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.remove_all_containers` with additional logging.
+        """
         self.push_log("Fetching container list.")
         super(DockerFabricClient, self).remove_all_containers()
 
     def remove_container(self, container, **kwargs):
+        """
+        Identical to :func:`docker.client.Client.remove_container` with additional logging.
+        """
         self.push_log("Removing container '{0}'.".format(container))
         super(DockerFabricClient, self).remove_container(container, **kwargs)
 
     def remove_image(self, image, **kwargs):
+        """
+        Identical to :func:`docker.client.Client.remove_image` with additional logging.
+        """
         self.push_log("Removing image '{0}'.".format(image))
         super(DockerFabricClient, self).remove_image(image, **kwargs)
 
     def save_image(self, image, local_filename):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.save_image` with additional logging.
+        """
         self.push_log("Receiving tarball for image '{0}' and storing as '{1}'".format(image, local_filename))
         super(DockerFabricClient, self).save_image(image, local_filename)
 
     def start(self, container, **kwargs):
+        """
+        Identical to :func:`dockermap.map.base.DockerClientWrapper.start` with additional logging.
+        """
         self.push_log("Starting container '{0}'.".format(container))
         super(DockerFabricClient, self).start(container, **kwargs)
 
     def stop(self, container, **kwargs):
+        """
+        Identical to :func:`docker.client.Client.stop` with additional logging.
+        """
         self.push_log("Stopping container '{0}'.".format(container))
         super(DockerFabricClient, self).stop(container, **kwargs)
 
     def wait(self, container):
+        """
+        Identical to :func:`docker.client.Client.wait` with additional logging.
+        """
         self.push_log("Waiting for container '{0}'.".format(container))
         super(DockerFabricClient, self).wait(container)
 

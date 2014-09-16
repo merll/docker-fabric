@@ -61,28 +61,27 @@ def _forwarder(chan, sock):
 
 class LocalTunnel(object):
     """
-Forward a local port to a given host and port on the remote side.
+    Forward a local port to a given host and port on the remote side.
 
-For example, you can use this to run local commands which connect to a
-database which is only bound to localhost on server:
+    For example, you can use this to run local commands which connect to a
+    database which is only bound to localhost on server:
 
-# Map localhost:6379 on the client to localhost:6379 on the server,
-# so that the local 'redis-cli' program ends up speaking to the remote
-# redis-server.
-with local_tunnel(6379):
-local("redis-cli -i")
+    # Map localhost:6379 on the client to localhost:6379 on the server,
+    # so that the local 'redis-cli' program ends up speaking to the remote
+    # redis-server.
+    with local_tunnel(6379):
+    local("redis-cli -i")
 
-``local_tunnel`` accepts up to three arguments:
+    ``local_tunnel`` accepts up to three arguments:
 
-* ``remote_port`` (mandatory) is the remote port to connect to.
-* ``remote_host`` (optional) is the remote host to connect to; the
-default is ``localhost``.
-* ``bind_port`` (optional) is the local port to bind; the default
-is ``remote_port``.
-* ``bind_host`` (optional) is the local address (DNS name or
-IP address) on which to bind; the default is ``localhost``.
-"""
-
+    * ``remote_port`` (mandatory) is the remote port to connect to.
+    * ``remote_host`` (optional) is the remote host to connect to; the
+      default is ``localhost``.
+    * ``bind_port`` (optional) is the local port to bind; the default
+      is ``remote_port``.
+    * ``bind_host`` (optional) is the local address (DNS name or
+      IP address) on which to bind; the default is ``localhost``.
+    """
     def __init__(self, remote_port, remote_host=None, bind_port=None, bind_host=None):
         self.remote_port = remote_port
         self.remote_host = remote_host or 'localhost'

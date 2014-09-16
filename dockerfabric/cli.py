@@ -14,6 +14,15 @@ from .utils.files import temp_dir, is_directory
 
 @needs_host
 def copy_resource(container, resource, local_filename, contents_only=True):
+    """
+    Copies a resource from a container to a compressed tarball and downloads it.
+
+    :param container:
+    :param resource:
+    :param local_filename:
+    :param contents_only:
+    :return:
+    """
     with temp_dir() as remote_tmp:
         base_name = os.path.basename(resource)
         copy_path = posixpath.join(remote_tmp, 'copy_tmp')
