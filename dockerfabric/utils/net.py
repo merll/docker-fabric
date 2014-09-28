@@ -11,6 +11,16 @@ IP4_PATTERN = re.compile(r'\s+inet addr:\s*((?:\d{1,3}\.){3}\d{1,3})')
 IP6_PATTERN = re.compile(r'\s+inet6 addr:\s*((?:[a-f0-9]{1,4}::?){1,7}[a-f0-9]{1,4})')
 
 
+def _get_address(interface_name, pattern):
+    out = stdout_result('ifconfig {0}'.format(interface_name), (1,), shell=False, quiet=True)
+    if not out:
+        raise ValueError("Network interface {0} not found.".format(interface_name))
+    match = pattern.search(out)
+    if match:
+        return match.group(1)
+    return None
+
+
 def _expand_groups(address):
     for group in address.split(':'):
         if group:
@@ -22,19 +32,28 @@ def _expand_groups(address):
 
 
 def get_ip4_address(interface_name):
-    out = stdout_result('ifconfig {0}'.format(interface_name), shell=False, quiet=True)
-    match = IP4_PATTERN.search(out)
-    if match:
-        return match.group(1)
-    return None
+    """
+    Extracts the IPv4 address for a particular interface from `ifconfig`.
+
+    :param interface_name: Name of the network interface (e.g. ``eth0``).
+    :type interface_name: unicode
+    :return: IPv4 address; ``None`` if the interface is present but no address could be extracted.
+    :rtype: unicode
+    """
+    return _get_address(interface_name, IP4_PATTERN)
 
 
 def get_ip6_address(interface_name, expand=False):
-    out = stdout_result('ifconfig {0}'.format(interface_name), shell=False, quiet=True)
-    match = IP6_PATTERN.search(out)
-    if match:
-        address = match.group(1)
-        if expand:
-            return ':'.join(_expand_groups(address))
-        return address
-    return None
+    """
+    Extracts the IPv6 address for a particular interface from `ifconfig`.
+
+    :param interface_name: Name of the network interface (e.g. ``eth0``).
+    :type interface_name: unicode
+    :param expand: If set to ``True``, an abbreviated address is expanded to the full address.
+    :return: IPv6 address; ``None`` if the interface is present but no address could be extracted.
+    :rtype: unicode
+    """
+    address = _get_address(interface_name, IP6_PATTERN)
+    if address and expand:
+        return ':'.join(_expand_groups(address))
+    return address
