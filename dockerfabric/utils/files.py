@@ -6,7 +6,7 @@ import tarfile
 import tempfile
 
 from fabric.api import run, sudo
-from fabric.context_managers import documented_contextmanager
+from fabric.context_managers import documented_contextmanager, settings
 
 from dockermap.shortcuts import rm, chmod, chown
 from .output import single_line_stdout
