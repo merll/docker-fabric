@@ -6,7 +6,7 @@ import tarfile
 import tempfile
 
 from fabric.api import run, sudo
-from fabric.context_managers import documented_contextmanager, settings
+from fabric.context_managers import documented_contextmanager
 
 from dockermap.shortcuts import rm, chmod, chown
 from .output import single_line_stdout
@@ -21,8 +21,7 @@ def get_remote_temp():
 
 def remove_ignore(path, use_sudo=False):
     which = sudo if use_sudo else run
-    with settings(warn_only=True):
-        which(rm(path, recursive=True))
+    which(rm(path, recursive=True), warn_only=True)
 
 
 def is_directory(path, use_sudo=False):
