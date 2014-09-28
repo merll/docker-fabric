@@ -21,10 +21,8 @@ def get_remote_temp():
 
 def remove_ignore(path, use_sudo=False):
     which = sudo if use_sudo else run
-    try:
+    with settings(warn_only=True):
         which(rm(path, recursive=True))
-    except OSError:
-        pass
 
 
 def is_directory(path, use_sudo=False):
