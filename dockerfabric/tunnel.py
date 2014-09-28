@@ -10,7 +10,16 @@ from fabric.thread_handling import ThreadHandler
 
 
 class LocalTunnels(dict):
+    """
+    Cache for local tunnels to the remote machine.
+    """
     def __getitem__(self, item):
+        """
+        :param item: Tuple of remote host, remote port, local port number, and local bind address.
+        :type item: tuple
+        :return: Local tunnel
+        :rtype: LocalTunnel
+        """
         remote_host, remote_port, bind_port, bind_host = item
         key = remote_host, remote_port
         tun = self.get(key)
@@ -61,6 +70,8 @@ def _forwarder(chan, sock):
 
 class LocalTunnel(object):
     """
+    Posted as PR #939 of Fabric: https://github.com/fabric/fabric/pull/939
+
     Forward a local port to a given host and port on the remote side.
 
     For example, you can use this to run local commands which connect to a

@@ -22,7 +22,8 @@ For importing YAML configurations for Docker-Map_, you can install Docker-Fabric
 
 Dependencies
 ------------
-The following libraries will be automatically installed from PyPI.
+The following libraries will be automatically installed from PyPI:
+
 * Fabric (tested with >=1.8.0)
 * docker-py (>=0.5.0)
 * docker-map (>=0.1.1)
@@ -80,7 +81,7 @@ In order to customize the general behavior of the client, the following variable
   want the local tunnel to have a different open port than the one on the remote end.
   Since a local port has to be available for each connection, the port is increased by one for each connection in order
   to handle multiple server connections. This means for example, that when setting this to 2224 and connecting to 10
-  servers, ports from 2224 through 2234 will be temporarily occupied.
+  servers, ports from 2224 through 2233 will be temporarily occupied.
 * ``docker_timeout``: Optional; by default uses :const:`~docker-py.docker.client.DEFAULT_TIMEOUT_SECONDS`.
 * ``docker_api_version``: Optional; by default uses :const:`~docker-py.docker.client.DEFAULT_DOCKER_API_VERSION`.
 

@@ -9,16 +9,41 @@ from .output import single_line_stdout, check_int
 
 
 def get_group_id(groupname):
+    """
+    Returns the group id to a given group name. Returns ``None`` if the group does not exist.
+
+    :param groupname: Group name.
+    :type groupname: unicode
+    :return: Group id.
+    :rtype: int
+    """
     gid = single_line_stdout('id -g {0}'.format(groupname), expected_errors=(1,), shell=False)
     return check_int(gid)
 
 
 def get_user_id(username):
+    """
+    Returns the user id to a given user name. Returns ``None`` if the user does not exist.
+
+    :param username: User name.
+    :type username: unicode
+    :return: User id.
+    :rtype: int
+    """
     uid = single_line_stdout('id -u {0}'.format(username), expected_errors=(1,), shell=False)
     return check_int(uid)
 
 
 def get_user_groups(username):
+    """
+    Returns the list if group names for a given user name, omitting the default group.
+    Returns ``None`` if the user does not exist.
+
+    :param username: User name.
+    :type username: unicode
+    :return: Group names.
+    :rtype: list
+    """
     out = single_line_stdout('groups {0}'.format(username))
     if out:
         return out.split()[2:]
@@ -26,18 +51,62 @@ def get_user_groups(username):
 
 
 def create_group(groupname, gid, system=True):
+    """
+    Creates a new user group with a specific id.
+
+    :param groupname: Group name.
+    :type groupname: unicode
+    :param gid: Group id.
+    :type gid: int or unicode
+    :param system: Creates a system group.
+    """
     sudo(addgroup(groupname, gid, system))
 
 
 def create_user(username, uid, system=True, no_login=True):
+    """
+    Creates a new user with a specific id.
+
+    :param username: User name.
+    :type username: unicode
+    :param uid: User id.
+    :type uid: int or unicode
+    :param system: Creates a system user.
+    :type system: bool
+    :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
+    :type no_login: bool
+    """
     sudo(adduser(username, uid, system, no_login))
 
 
 def assign_user_groups(username, groupnames):
+    """
+    Assigns a user to a set of groups. User and group need to exists. The new groups are appended to existing group
+    assignments.
+
+    :param username: User name.
+    :type username: unicode
+    :param groupnames: Group names.
+    :type groupnames: unicode
+    """
     sudo(assignuser(username, groupnames))
 
 
 def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
+    """
+    Returns the id for the given group, and creates it first in case it does not exist.
+
+    :param groupname: Group name.
+    :type groupname: unicode
+    :param gid_preset: Group id to set if a new group is created.
+    :type gid_preset: int or unicode
+    :param system: Create a system group.
+    :type system: bool
+    :param id_dependent: If the group exists, but its id does not match `gid_preset`, an error is thrown.
+    :type id_dependent: bool
+    :return: Group id of the existing or new group.
+    :rtype: int
+    """
     gid = get_group_id(groupname)
     if gid is None:
         create_group(groupname, gid_preset, system)
@@ -48,6 +117,25 @@ def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
 
 
 def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_login=True, id_dependent=True):
+    """
+    Returns the id of the given user name, and creates it first in case it does not exist. A default group is created
+    as well.
+
+    :param username: User name.
+    :type username: unicode
+    :param uid_preset: User id to set in case a new user is created.
+    :type uid_preset: int or unicode
+    :param groupnames: Additional names of groups to assign the user to. If the user exists, these will be appended to
+      existing group assignments.
+    :type groupnames: iterable
+    :param system: Create a system user.
+    :type system: bool
+    :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
+    :type no_login: bool
+    :param id_dependent: If the user exists, but its id does not match `uid_preset`, an error is thrown.
+    :type id_dependent: bool
+    :return:
+    """
     uid = get_user_id(username)
     gid = get_group_id(username)
     if gid is None:

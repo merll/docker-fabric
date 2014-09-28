@@ -26,7 +26,6 @@ Contents
 
    installation
    start
-   api/modules
 
 
 Status

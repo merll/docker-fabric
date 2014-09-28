@@ -5,7 +5,7 @@ from fabric.api import cd, env, run, sudo, task
 
 from dockermap.shortcuts import curl, untargz
 from utils.files import temp_dir
-from utils.net import get_ip4_address
+from utils.net import get_ip4_address, get_ip6_address
 from utils.users import assign_user_groups
 from . import DEFAULT_SOCAT_VERSION, cli
 from .apiclient import docker_fabric
@@ -47,6 +47,11 @@ def check_version():
 @task
 def get_ip(interface_name='docker0'):
     print(get_ip4_address(interface_name))
+
+
+@task
+def get_ipv6(interface_name='docker0', expand=False):
+    print(get_ip6_address(interface_name, expand=expand))
 
 
 @task

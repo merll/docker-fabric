@@ -251,6 +251,12 @@ class DockerFabricClient(base.DockerClientWrapper):
 
 
 class ContainerFabric(client.MappingDockerClient):
+    """
+    Convenience class for using a :class:`~dockermap.map.container.ContainerMap` on a :class:`DockerFabricClient`.
+
+    :param container_map: Container map.
+    :type container_map: dockermap.map.container.ContainerMap
+    """
     def __init__(self, container_map):
         super(ContainerFabric, self).__init__(container_map, docker_fabric())
 
