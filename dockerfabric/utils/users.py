@@ -63,7 +63,7 @@ def create_group(groupname, gid, system=True):
     sudo(addgroup(groupname, gid, system))
 
 
-def create_user(username, uid, system=True, no_login=True):
+def create_user(username, uid, system=False, no_password=False, no_login=True, group=False, gecos=None):
     """
     Creates a new user with a specific id.
 
@@ -73,10 +73,16 @@ def create_user(username, uid, system=True, no_login=True):
     :type uid: int or unicode
     :param system: Creates a system user.
     :type system: bool
+    :param no_password: Do not set a password for the new user.
+    :type: no_password: bool
     :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
     :type no_login: bool
+    :param group: Create a group with the same id.
+    :type group: bool
+    :param gecos: Provide GECOS info and suppress prompt.
+    :type gecos: unicode
     """
-    sudo(adduser(username, uid, system, no_login))
+    sudo(adduser(username, uid, system, no_password, no_login, group, gecos))
 
 
 def assign_user_groups(username, groupnames):
@@ -116,7 +122,8 @@ def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
     return gid
 
 
-def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_login=True, id_dependent=True):
+def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_password=False, no_login=True,
+                       gecos=None, id_dependent=True):
     """
     Returns the id of the given user name, and creates it first in case it does not exist. A default group is created
     as well.
@@ -130,20 +137,25 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_log
     :type groupnames: iterable
     :param system: Create a system user.
     :type system: bool
+    :param no_password: Do not set a password for the new user.
+    :type: no_password: bool
     :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
     :type no_login: bool
+    :param gecos: Provide GECOS info and suppress prompt.
+    :type gecos: unicode
     :param id_dependent: If the user exists, but its id does not match `uid_preset`, an error is thrown.
     :type id_dependent: bool
     :return:
     """
     uid = get_user_id(username)
     gid = get_group_id(username)
+    if id_dependent and gid is not None and gid != uid_preset:
+        error("Present group id '{0}' does not match the required id of the environment '{1}'.".format(gid, uid_preset))
     if gid is None:
         create_group(username, uid_preset, system)
-    elif id_dependent and gid != uid_preset:
-        error("Present group id '{0}' does not match the required id of the environment '{1}'.".format(gid, uid_preset))
+        gid = uid_preset
     if uid is None:
-        create_user(username, uid_preset, system, no_login)
+        create_user(username, gid, system, no_password, no_login, False, gecos)
         if groupnames:
             assign_user_groups(username, groupnames)
         return uid
