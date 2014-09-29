@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric.api import cd, env, run, sudo, task
+import os
+from fabric.api import cd, env, get, put, run, sudo, task
+from fabric.utils import error
 
 from dockermap.shortcuts import curl, untargz
+from dockermap.utils import expand_path
 from utils.files import temp_dir
 from utils.net import get_ip4_address, get_ip6_address
 from utils.users import assign_user_groups
@@ -37,6 +40,26 @@ def build_socat():
             run('./configure')
             run('make')
             sudo('make install')
+
+
+@task
+def fetch_socat(local):
+    remote_file = '/usr/local/bin/socat'
+    local_file = expand_path(local)
+    if os.path.exists(local_file) and not os.path.isfile(local_file):
+        local_file = os.path.join(local, 'socat')
+    get(remote_file, local_file)
+
+
+@task
+def install_socat(src):
+    src_file = expand_path(src)
+    if os.path.exists(src_file) and not os.path.isfile(src_file):
+        src_file = os.path.join(src_file, 'socat')
+        if not os.path.exists(src_file):
+            error("Socat cannot be found in the provided path ({0} or {1}).".format(src, src_file))
+    dest_file = '/usr/local/bin/socat'
+    put(src_file, dest_file, use_sudo=True, mode='0755')
 
 
 @task
