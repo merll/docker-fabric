@@ -5,6 +5,7 @@ import select
 import socket
 import errno
 
+from fabric.network import needs_host
 from fabric.state import connections, env
 from fabric.thread_handling import ThreadHandler
 
@@ -104,6 +105,7 @@ class LocalTunnel(object):
         self.listening_socket = None
         self.listening_thread = None
 
+    @needs_host
     def connect(self):
         def listener_thread_main(thead_sock, callback, *a, **kw):
             try:

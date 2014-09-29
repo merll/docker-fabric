@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from fabric.network import needs_host
 from fabric.state import env, connections
 
 from .tunnel import LocalTunnel
@@ -48,6 +49,7 @@ class SocatService(object):
         self.quiet = quiet
         self.channel = None
 
+    @needs_host
     def connect(self):
         """
         Opens a channel through a SSH connection to ``env.host_string`` (which will be opened by Fabric if necessary)
