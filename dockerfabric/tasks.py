@@ -109,6 +109,12 @@ def save_image(image, filename=None):
 
 
 @task
-def load_image(filename):
-    with open(filename, 'r') as f:
-        docker_fabric().load_image(f)
+def load_image(filename, timeout=120):
+    c = docker_fabric()
+    with open(expand_path(filename), 'r') as f:
+        _timeout = c._timeout
+        c._timeout = timeout
+        try:
+            c.load_image(f)
+        finally:
+            c._timeout = _timeout
