@@ -140,8 +140,10 @@ def save_image(image, local_filename):
     :param local_filename: Local file name to store the image into. If this is a directory, the image will be stored
       there as a file named ``image_<Image name>.tar.gz``.
     """
+    r_name, __, i_name = image.rpartition('/')
+    i_name, __, __ = i_name.partition(':')
     with temp_dir() as remote_tmp:
-        archive = posixpath.join(remote_tmp, 'image_{0}.tar.gz'.format(image))
+        archive = posixpath.join(remote_tmp, 'image_{0}.tar.gz'.format(i_name))
         run('docker save {0} | gzip --stdout > {1}'.format(image, archive), shell=False)
         get(archive, local_filename)
 
