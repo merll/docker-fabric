@@ -123,12 +123,12 @@ class DockerFabricClient(base.DockerClientWrapper):
         self.push_log("Generating list of stopped containers.")
         super(DockerFabricClient, self).cleanup_containers()
 
-    def cleanup_images(self):
+    def cleanup_images(self, remove_old=False):
         """
         Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Checking images for dependent images and containers.")
-        super(DockerFabricClient, self).cleanup_images()
+        super(DockerFabricClient, self).cleanup_images(remove_old)
 
     def get_container_names(self):
         """

@@ -93,8 +93,8 @@ def cleanup_containers():
 
 
 @task
-def cleanup_images():
-    docker_fabric().cleanup_images()
+def cleanup_images(remove_old=False):
+    docker_fabric().cleanup_images(remove_old)
 
 
 @task
