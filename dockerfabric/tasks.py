@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from datetime import datetime
+import itertools
 import os
 from fabric.api import cd, env, get, put, run, sudo, task
 from fabric.utils import error
+import six
 
 from dockermap.shortcuts import curl, untargz
 from dockermap.utils import expand_path
@@ -15,6 +18,45 @@ from .apiclient import docker_fabric
 
 
 SOCAT_URL = 'http://www.dest-unreach.org/socat/download/socat-{0}.tar.gz'
+IMAGE_COLUMNS = ('Id', 'RepoTags', 'ParentId', 'Created', 'VirtualSize', 'Size')
+CONTAINER_COLUMNS = ('Id', 'Names', 'Image', 'Command', 'Ports', 'Status', 'Created')
+
+
+def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, short_image=False):
+    def _format_port(port_dict):
+        if 'PublicPort' in port_dict and 'IP' in port_dict:
+            return '{IP}:{PublicPort}->{PrivatePort}/{Type}'.format(**port_dict)
+        return '{PrivatePort}/{Type}'.format(**port_dict)
+
+    def _get_column(item, column):
+        data = item.get(column, '')
+        if isinstance(data, list):
+            if column == 'Ports':
+                return map(_format_port, data)
+            return data
+        if column in ('Id', 'ParentId') and not full_ids:
+            return data[:12],
+        if column == 'Created':
+            return datetime.utcfromtimestamp(data).isoformat(),
+        if column == 'Command' and not full_cmd:
+            return data[:25],
+        if column == 'Image' and short_image:
+            __, __, i_name = data.rpartition('/')
+            return i_name,
+        return unicode(data),
+
+    def _max_len(col_data):
+        if col_data:
+            return max(map(len, col_data))
+        return 0
+
+    rows = [[_get_column(i, col) for col in columns] for i in data_dict]
+    col_lens = map(max, (map(_max_len, c) for c in zip(*rows)))
+    row_format = '  '.join('{{{0}:{1}}}'.format(i, l) for i, l in enumerate(col_lens))
+    print(row_format.format(*columns))
+    for row in rows:
+        for c in itertools.izip_longest(*row, fillvalue=''):
+            print(row_format.format(*c))
 
 
 @task
@@ -63,8 +105,11 @@ def install_socat(src):
 
 
 @task
-def check_version():
-    print(docker_fabric().version())
+def version():
+    output = docker_fabric().version()
+    col_len = max(map(len, output.keys())) + 1
+    for k, v in six.iteritems(output):
+        print('{0:{1}} {2}'.format(''.join((k, ':')), col_len, v))
 
 
 @task
@@ -78,13 +123,15 @@ def get_ipv6(interface_name='docker0', expand=False):
 
 
 @task
-def list_images():
-    print(docker_fabric().images())
+def list_images(list_all=False, full_ids=False):
+    images = docker_fabric().images(all=list_all)
+    _format_output_table(images, IMAGE_COLUMNS, full_ids)
 
 
 @task
-def list_containers(all=True):
-    print(docker_fabric().containers(all=all))
+def list_containers(list_all=True, short_image=True, full_ids=False, full_cmd=False):
+    containers = docker_fabric().containers(all=list_all)
+    _format_output_table(containers, CONTAINER_COLUMNS, full_ids, full_cmd, short_image)
 
 
 @task

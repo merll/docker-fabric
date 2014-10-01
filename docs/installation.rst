@@ -26,7 +26,7 @@ The following libraries will be automatically installed from PyPI:
 
 * Fabric (tested with >=1.8.0)
 * docker-py (>=0.5.0)
-* docker-map (>=0.1.1)
+* docker-map (>=0.1.2)
 * Optional: PyYAML (tested with 3.11) for YAML configuration import
 
 
@@ -40,8 +40,8 @@ installed otherwise.
 Socat
 -----
 The tool Socat_ is needed in order to tunnel local TCP-IP connections to a unix socket on the target machine. You can
-either install it yourself, or use the existing Fabric task `build_socat` (currently only Ubuntu) to build it directly
-on your target machine.
+either install it yourself and transfer the binary using the Fabric task `install_socat`, or use the task `build_socat`
+(currently only Ubuntu) to build it directly on your target machine.
 
 
 Configuration
@@ -61,6 +61,14 @@ For assigning an existing user to that group, run
 
 Note that if you run this command with the same user (using `sudo`), you need to re-connect. Use
 `fabric.network.disconnect_all`_ if necessary.
+
+
+Tasks
+-----
+If you plan to use the built-in tasks, include the module in your fabfile module (e.g. `fabfile.py`). Most likely
+you might want to assign an alias for the task namespace::
+
+    from dockerfabric import tasks as docker
 
 
 Environment
@@ -102,22 +110,28 @@ commands (:func:`~dockerfabric.apiclient.DockerFabricClient.login`,
 
 Checking the setup
 ==================
-For checking if everything is set up properly, you can run the included task `check_version`. For example, running
+For checking if everything is set up properly, you can run the included task `version`. For example, running
 
 .. code-block:: bash
 
-   fab docker.check_version
+   fab docker.version
 
 
 against a local Vagrant machine (using the default setup, only allowing socket connections) and tunnelling through
 port 2224 should show a similar result::
 
-   [127.0.0.1] Executing task 'docker.check_version'
-   socat TCP-LISTEN:2224,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
-   {u'KernelVersion': u'3.13.0-34-generic', u'Arch': u'amd64', u'ApiVersion': u'1.14', u'Version': u'1.2.0', u'GitCommit': u'fa7b24f', u'Os': u'linux', u'GoVersion': u'go1.3.1'}
+    [127.0.0.1] Executing task 'docker.check_version'
+    socat TCP-LISTEN:2224,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+    KernelVersion: 3.13.0-34-generic
+    Arch:          amd64
+    ApiVersion:    1.14
+    Version:       1.2.0
+    GitCommit:     fa7b24f
+    Os:            linux
+    GoVersion:     go1.3.1
 
-   Done.
-   Disconnecting from 127.0.0.1:2222... done.
+    Done.
+    Disconnecting from 127.0.0.1:2222... done.
 
 
 .. _PyPI: https://pypi.python.org/pypi/docker-fabric
