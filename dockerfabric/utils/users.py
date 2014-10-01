@@ -93,7 +93,7 @@ def assign_user_groups(username, groupnames):
     :param username: User name.
     :type username: unicode
     :param groupnames: Group names.
-    :type groupnames: unicode
+    :type groupnames: iterable
     """
     sudo(assignuser(username, groupnames))
 
