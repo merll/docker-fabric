@@ -63,7 +63,7 @@ def create_group(groupname, gid, system=True):
     sudo(addgroup(groupname, gid, system))
 
 
-def create_user(username, uid, system=False, no_password=False, no_login=True, group=False, gecos=None):
+def create_user(username, uid, system=False, no_login=True, no_password=False, group=False, gecos=None):
     """
     Creates a new user with a specific id.
 
@@ -73,16 +73,16 @@ def create_user(username, uid, system=False, no_password=False, no_login=True, g
     :type uid: int or unicode
     :param system: Creates a system user.
     :type system: bool
-    :param no_password: Do not set a password for the new user.
-    :type: no_password: bool
     :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
     :type no_login: bool
+    :param no_password: Do not set a password for the new user.
+    :type: no_password: bool
     :param group: Create a group with the same id.
     :type group: bool
     :param gecos: Provide GECOS info and suppress prompt.
     :type gecos: unicode
     """
-    sudo(adduser(username, uid, system, no_password, no_login, group, gecos))
+    sudo(adduser(username, uid, system, no_login, no_password, group, gecos))
 
 
 def assign_user_groups(username, groupnames):
@@ -137,10 +137,10 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_pas
     :type groupnames: iterable
     :param system: Create a system user.
     :type system: bool
-    :param no_password: Do not set a password for the new user.
-    :type: no_password: bool
     :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
     :type no_login: bool
+    :param no_password: Do not set a password for the new user.
+    :type: no_password: bool
     :param gecos: Provide GECOS info and suppress prompt.
     :type gecos: unicode
     :param id_dependent: If the user exists, but its id does not match `uid_preset`, an error is thrown.
@@ -155,7 +155,7 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_pas
         create_group(username, uid_preset, system)
         gid = uid_preset
     if uid is None:
-        create_user(username, gid, system, no_password, no_login, False, gecos)
+        create_user(username, gid, system, no_login, no_password, False, gecos)
         if groupnames:
             assign_user_groups(username, groupnames)
         return uid
