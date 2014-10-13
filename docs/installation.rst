@@ -100,7 +100,7 @@ commands (:func:`~dockerfabric.apiclient.DockerFabricClient.login`,
 :func:`~dockerfabric.apiclient.DockerFabricClient.pull`).
 
 * ``docker_registry_user``: User name to use when authenticating against a Docker registry.
-* `docker_registry_password``: Password to use when authenticating against a Docker registry.
+* ``docker_registry_password``: Password to use when authenticating against a Docker registry.
 * ``docker_registry_mail``: E-Mail to use when authenticating against a Docker registry.
 * ``docker_registry_repository``: Optional; the registry to connect to. This will be expanded to a URL automatically.
   If not set, registry operations will run on the public Docker index.

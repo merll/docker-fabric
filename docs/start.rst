@@ -23,27 +23,19 @@ preset globally for the project. Additionally, it provides a caching functionali
 which speeds up access to Docker significantly.
 
 
-Short examples:
-
-.. code-block:: python
+Short examples::
 
    docker_fabric().version()
 
 returns version information from the installed Docker service. This function is directly passed through to
-``docker-py``.
-
-
-.. code-block:: python
+``docker-py`` and formatted. The utility function::
 
    docker_fabric().cleanup_containers()
 
 removes all containers on the target Docker service that have exited.
 
-
 For building images, use Docker-Map's :class:`~dockermap.build.dockerfile.DockerFile` for generating an environment,
-and run
-
-.. code-block:: python
+and run::
 
    docker_fabric().build_from_file(dockerfile, 'new_image_tag:1.0', rm=True)
 

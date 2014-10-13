@@ -28,7 +28,7 @@ setup(
     author='Matthias Erll',
     author_email='matthias@erll.de',
     url='https://github.com/merll/docker-fabric',
-    description='Integration for Docker into Fabric.',
+    description='Integration of Docker deployments into Fabric.',
     long_description=include_readme(),
     platforms=['OS Independent'],
     keywords=['docker', 'fabric'],
