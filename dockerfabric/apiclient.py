@@ -14,7 +14,14 @@ DOCKER_LOG_FORMAT = "[{0}] docker: {1}"
 
 
 class DockerFabricConnections(dict):
+    """
+    Cache for connections to the Docker Remote API.
+    """
     def get_connection(self):
+        """
+        Create a new connection, or return an existing one from the cache. Uses Fabric's current ``env.host_string``
+        and the URL to the Docker service.
+        """
         key = env.host_string, env.docker_base_url
         conn = self.get(key)
         if not conn:

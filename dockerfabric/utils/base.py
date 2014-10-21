@@ -9,6 +9,13 @@ from fabric.network import needs_host
 
 @needs_host
 def get_current_roles():
+    """
+    Determines the list of roles, that the current host is assigned to. If ``env.roledefs`` is not set, an empty list
+    is returned.
+
+    :return: List of roles of the current host.
+    :rtype: list
+    """
     current_host = env.host_string
     roledefs = env.get('roledefs')
     if roledefs:

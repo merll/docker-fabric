@@ -61,6 +61,9 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
 
 @task
 def install_docker():
+    """
+    Installs Docker on a remote machine and adds the current user to the `docker` user group.
+    """
     sudo('apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9')
     sudo('echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list')
     sudo('apt-get update')
@@ -70,6 +73,9 @@ def install_docker():
 
 @task
 def build_socat():
+    """
+    Downloads and installs the tool `socat` from source.
+    """
     sudo('apt-get update')
     sudo('apt-get -y install gcc make')
     with temp_dir() as remote_tmp:
@@ -86,6 +92,12 @@ def build_socat():
 
 @task
 def fetch_socat(local):
+    """
+    Fetches the `socat` binary from a remote host.
+
+    :param local: Local path to copy the file to, or local file path.
+    :type local: unicode
+    """
     remote_file = '/usr/local/bin/socat'
     local_file = expand_path(local)
     if os.path.exists(local_file) and not os.path.isfile(local_file):
@@ -95,6 +107,12 @@ def fetch_socat(local):
 
 @task
 def install_socat(src):
+    """
+    Places the `socat` binary on a remote host.
+
+    :param src: Local directory that contains the source file, or path to the file itself.
+    :type src: unicode
+    """
     src_file = expand_path(src)
     if os.path.exists(src_file) and not os.path.isfile(src_file):
         src_file = os.path.join(src_file, 'socat')
@@ -106,6 +124,9 @@ def install_socat(src):
 
 @task
 def version():
+    """
+    Shows version information of the remote Docker service, similar to ``docker version``.
+    """
     output = docker_fabric().version()
     col_len = max(map(len, output.keys())) + 1
     for k, v in six.iteritems(output):
@@ -114,49 +135,115 @@ def version():
 
 @task
 def get_ip(interface_name='docker0'):
+    """
+    Shows the IP4 address of a network interface.
+
+    :param interface_name: Name of the network interface. Default is ``docker0``.
+    :type interface_name: unicode
+    """
     print(get_ip4_address(interface_name))
 
 
 @task
 def get_ipv6(interface_name='docker0', expand=False):
+    """
+    Shows the IP6 address of a network interface.
+
+    :param interface_name: Name of the network interface. Default is ``docker0``.
+    :type interface_name: unicode
+    :param expand: Expand the abbreviated IP6 address. Default is ``False``.
+    :type expand: bool
+    """
     print(get_ip6_address(interface_name, expand=expand))
 
 
 @task
 def list_images(list_all=False, full_ids=False):
+    """
+    Lists images on the Docker remote host, similar to ``docker images``.
+
+    :param list_all: Lists all images (e.g. dependencies). Default is ``False``, only shows named images.
+    :type list_all: bool
+    :param full_ids: Shows the full ids. When ``False`` (default) only shows the first 12 characters.
+    :type full_ids: bool
+    """
     images = docker_fabric().images(all=list_all)
     _format_output_table(images, IMAGE_COLUMNS, full_ids)
 
 
 @task
 def list_containers(list_all=True, short_image=True, full_ids=False, full_cmd=False):
+    """
+    Lists containers on the Docker remote host, similar to ``docker ps``.
+
+    :param list_all: Shows all containers. Default is ``False``, which omits exited containers.
+    :type list_all: bool
+    :param short_image: Hides the repository prefix for preserving space. Default is ``True``.
+    :type short_image: bool
+    :param full_ids: Shows the full image ids. When ``False`` (default) only shows the first 12 characters.
+    :type full_ids: bool
+    :param full_ids: Shows the full container command. When ``False`` (default) only shows the first 25 characters.
+    :type full_ids: bool
+    """
     containers = docker_fabric().containers(all=list_all)
     _format_output_table(containers, CONTAINER_COLUMNS, full_ids, full_cmd, short_image)
 
 
 @task
 def cleanup_containers():
+    """
+    Removes all containers that have finished running.
+    """
     docker_fabric().cleanup_containers()
 
 
 @task
 def cleanup_images(remove_old=False):
+    """
+    Removes all images that have no name, and that are not references as dependency by any other named image.
+
+    :param remove_old: Also remove images that do have a name, but no `latest` tag.
+    :type remove_old: bool
+    """
     docker_fabric().cleanup_images(remove_old)
 
 
 @task
 def remove_all_containers():
+    """
+    Stops and removes all containers from the remote. Use with caution outside of a development environment!
+    :return:
+    """
     docker_fabric().remove_all_containers()
 
 
 @task
 def save_image(image, filename=None):
+    """
+    Saves a Docker image from the remote to a local files. For performance reasons, uses the Docker command line client
+    on the host, generates a gzip-tarball and downloads that.
+
+    :param image: Image name or id.
+    :type image: unicode
+    :param filename: File name to store the local file. If not provided, will use ``<image>.tar.gz`` in the current
+      working directory.
+    :type filename: unicode
+    """
     local_name = filename or '{0}.tar.gz'.format(image)
     cli.save_image(image, local_name)
 
 
 @task
 def load_image(filename, timeout=120):
+    """
+    Uploads an image from a local file to a Docker remote. Note that this temporarily has to extend the service timeout
+    period.
+
+    :param filename: Local file name.
+    :type filename: unicode
+    :param timeout: Timeout in seconds to set temporarily for the upload.
+    :type timeout: int
+    """
     c = docker_fabric()
     with open(expand_path(filename), 'r') as f:
         _timeout = c._timeout
