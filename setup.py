@@ -1,14 +1,16 @@
 from distutils.spawn import find_executable
 import os
-import pandoc
 from setuptools import setup, find_packages
 
 from dockerfabric import __version__
 
-pandoc.core.PANDOC_PATH = find_executable('pandoc')
-
 
 def include_readme():
+    try:
+        import pandoc
+    except ImportError:
+        return ''
+    pandoc.core.PANDOC_PATH = find_executable('pandoc')
     readme_file = os.path.join(os.path.dirname(__file__), 'README.md')
     doc = pandoc.Document()
     with open(readme_file, 'r') as rf:
