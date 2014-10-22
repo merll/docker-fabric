@@ -4,10 +4,11 @@ from __future__ import unicode_literals
 from fabric.network import needs_host
 from fabric.state import env, connections
 
+from .thread import ThreadDefaultDict
 from .tunnel import LocalTunnel
 
 
-class SocketTunnels(dict):
+class SocketTunnels(ThreadDefaultDict):
     """
     Cache for `socat` tunnels to the remote machine.
     """
@@ -18,14 +19,14 @@ class SocketTunnels(dict):
         :return: Socket tunnel
         :rtype: SocketTunnel
         """
-        remote_socket, remote_port, local_port = item
-        key = env.host_string, remote_socket
-        svc = self.get(key)
-        if not svc:
+        def _connect():
             svc = SocketTunnel(remote_socket, remote_port, local_port)
             svc.connect()
-            self[key] = svc
-        return svc
+            return svc
+
+        remote_socket, remote_port, local_port = item
+        key = env.host_string, remote_socket
+        return self.get(key, _connect)
 
 
 socat_tunnels = SocketTunnels()

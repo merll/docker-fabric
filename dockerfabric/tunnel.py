@@ -9,8 +9,10 @@ from fabric.network import needs_host
 from fabric.state import connections, env
 from fabric.thread_handling import ThreadHandler
 
+from .thread import ThreadDefaultDict
 
-class LocalTunnels(dict):
+
+class LocalTunnels(ThreadDefaultDict):
     """
     Cache for local tunnels to the remote machine.
     """
@@ -21,14 +23,14 @@ class LocalTunnels(dict):
         :return: Local tunnel
         :rtype: LocalTunnel
         """
-        remote_host, remote_port, bind_port, bind_host = item
-        key = remote_host, remote_port
-        tun = self.get(key)
-        if not tun:
+        def _connect():
             tun = LocalTunnel(remote_port, remote_host, bind_port, bind_host)
             tun.connect()
-            self[key] = tun
-        return tun
+            return tun
+
+        remote_host, remote_port, bind_port, bind_host = item
+        key = remote_host, remote_port
+        return self.get(key, _connect)
 
 
 local_tunnels = LocalTunnels()
