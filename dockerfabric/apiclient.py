@@ -6,15 +6,15 @@ from docker import client as docker
 from fabric.api import env
 
 from dockermap.map import base, client
+from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
-from .thread import ThreadDefaultDict, LocalPortCounter
 from .tunnel import local_tunnels
 
 
 DOCKER_LOG_FORMAT = "[{0}] docker: {1}"
 
 
-class DockerFabricConnections(ThreadDefaultDict):
+class DockerFabricConnections(ConnectionDict):
     """
     Cache for connections to the Docker Remote API.
     """
@@ -28,7 +28,6 @@ class DockerFabricConnections(ThreadDefaultDict):
 
 
 docker_fabric = DockerFabricConnections().get_connection
-local_ports = LocalPortCounter.get_instance()
 
 
 class DockerFabricClient(base.DockerClientWrapper):
@@ -63,7 +62,7 @@ class DockerFabricClient(base.DockerClientWrapper):
             init_local_port = env.get('docker_tunnel_local_port', remote_port)
         else:
             init_local_port = tunnel_local_port
-        local_port = local_ports.get(init_local_port)
+        local_port = get_local_port(init_local_port)
         url = base_url or env.get('docker_base_url')
         api_version = version or env.get('docker_api_version', docker.DEFAULT_DOCKER_API_VERSION)
         client_timeout = timeout or env.get('docker_timeout', docker.DEFAULT_TIMEOUT_SECONDS)
