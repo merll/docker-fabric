@@ -23,7 +23,7 @@ class DockerFabricConnections(ConnectionDict):
         Create a new connection, or return an existing one from the cache. Uses Fabric's current ``env.host_string``
         and the URL to the Docker service.
         """
-        key = env.host_string, env.docker_base_url
+        key = env.get('host_string'), env.get('docker_base_url')
         return self.get(key, DockerFabricClient)
 
 
