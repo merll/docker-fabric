@@ -7,6 +7,7 @@ import os
 from fabric.api import cd, env, get, put, run, sudo, task
 from fabric.utils import error
 import six
+from dockerfabric.utils.output import stdout_result
 
 from dockermap.shortcuts import curl, untargz
 from dockermap.utils import expand_path
@@ -104,6 +105,15 @@ def fetch_socat(local):
     if os.path.exists(local_file) and not os.path.isfile(local_file):
         local_file = os.path.join(local, 'socat')
     get(remote_file, local_file)
+
+
+@task
+def reset_socat(use_sudo=False):
+    output = stdout_result('ps -o pid -C socat', quiet=True)
+    pids = output.split('\n')[1:]
+    print("Removing process(es) with id(s) {0}.".format(', '.join(pids)))
+    which = sudo if use_sudo else run
+    which('kill {0}'.format(' '.join(pids)), quiet=True)
 
 
 @task
