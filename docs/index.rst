@@ -12,9 +12,9 @@ The project is hosted on GitHub_.
 
 Features
 ========
-* Integration of docker-map's container structure into Fabric deployments.
-* Complements Docker API commands with command line shortcuts, where appropriate.
-* Use Fabric's SSH tunnel for connecting to the Docker Remote API.
+* Integration of :ref:`Docker-Map's container structure <dockermap:container_maps>` into Fabric deployments.
+* Complements Docker API commands with command line shortcuts.
+* Uses Fabric's SSH tunnel for connecting to the Docker Remote API.
 * Fabric-like console feedback for Docker image and container management.
 
 
@@ -26,6 +26,10 @@ Contents
 
    installation
    start
+   guide/apiclient
+   guide/utils
+   guide/tasks
+   guide/containers
 
 
 Status

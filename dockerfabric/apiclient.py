@@ -100,14 +100,14 @@ class DockerFabricClient(base.DockerClientWrapper):
 
     def build(self, tag, **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.build` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.build` with additional logging.
         """
         self.push_log("Building image '{0}'.".format(tag))
         return super(DockerFabricClient, self).build(tag, **kwargs)
 
     def create_container(self, image, name=None, **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.create_container` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.create_container` with additional logging.
         """
         name_str = " '{0}'".format(name) if name else ""
         self.push_log("Creating container{0} from image '{1}'.".format(name_str, image))
@@ -115,49 +115,49 @@ class DockerFabricClient(base.DockerClientWrapper):
 
     def copy_resource(self, container, resource, local_filename):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Receiving tarball for resource '{0}:{1}' and storing as {2}".format(container, resource, local_filename))
         super(DockerFabricClient, self).copy_resource(container, resource, local_filename)
 
     def cleanup_containers(self):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Generating list of stopped containers.")
         super(DockerFabricClient, self).cleanup_containers()
 
     def cleanup_images(self, remove_old=False):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Checking images for dependent images and containers.")
         super(DockerFabricClient, self).cleanup_images(remove_old)
 
     def get_container_names(self):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Fetching container list.")
         return super(DockerFabricClient, self).get_container_names()
 
     def get_image_tags(self):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Fetching image list.")
         return super(DockerFabricClient, self).get_image_tags()
 
     def import_image(self, image, tag='latest', **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Fetching image '{0}' from registry.".format(image))
         return super(DockerFabricClient, self).import_image(image=image, tag=tag, **kwargs)
 
     def login(self, **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.login` with two enhancements:
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.login` with two enhancements:
 
         * additional logging;
         * login parameters can be passed through ``kwargs``, or set as default using the following ``env``
@@ -183,7 +183,7 @@ class DockerFabricClient(base.DockerClientWrapper):
 
     def pull(self, repository, tag=None, stream=True, **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.pull` with two enhancements:
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.pull` with two enhancements:
 
         * additional logging;
         * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
@@ -195,7 +195,7 @@ class DockerFabricClient(base.DockerClientWrapper):
 
     def push(self, repository, stream=True, **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.push` with two enhancements:
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.push` with two enhancements:
 
         * additional logging;
         * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
@@ -206,49 +206,49 @@ class DockerFabricClient(base.DockerClientWrapper):
 
     def remove_all_containers(self):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.remove_all_containers` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.remove_all_containers` with additional logging.
         """
         self.push_log("Fetching container list.")
         super(DockerFabricClient, self).remove_all_containers()
 
     def remove_container(self, container, **kwargs):
         """
-        Identical to :func:`docker.client.Client.remove_container` with additional logging.
+        Identical to :meth:`docker.client.Client.remove_container` with additional logging.
         """
         self.push_log("Removing container '{0}'.".format(container))
         super(DockerFabricClient, self).remove_container(container, **kwargs)
 
     def remove_image(self, image, **kwargs):
         """
-        Identical to :func:`docker.client.Client.remove_image` with additional logging.
+        Identical to :meth:`docker.client.Client.remove_image` with additional logging.
         """
         self.push_log("Removing image '{0}'.".format(image))
         super(DockerFabricClient, self).remove_image(image, **kwargs)
 
     def save_image(self, image, local_filename):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.save_image` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.save_image` with additional logging.
         """
         self.push_log("Receiving tarball for image '{0}' and storing as '{1}'".format(image, local_filename))
         super(DockerFabricClient, self).save_image(image, local_filename)
 
     def start(self, container, **kwargs):
         """
-        Identical to :func:`dockermap.map.base.DockerClientWrapper.start` with additional logging.
+        Identical to :meth:`dockermap.map.base.DockerClientWrapper.start` with additional logging.
         """
         self.push_log("Starting container '{0}'.".format(container))
         super(DockerFabricClient, self).start(container, **kwargs)
 
     def stop(self, container, **kwargs):
         """
-        Identical to :func:`docker.client.Client.stop` with additional logging.
+        Identical to :meth:`docker.client.Client.stop` with additional logging.
         """
         self.push_log("Stopping container '{0}'.".format(container))
         super(DockerFabricClient, self).stop(container, **kwargs)
 
     def wait(self, container):
         """
-        Identical to :func:`docker.client.Client.wait` with additional logging.
+        Identical to :meth:`docker.client.Client.wait` with additional logging.
         """
         self.push_log("Waiting for container '{0}'.".format(container))
         super(DockerFabricClient, self).wait(container)

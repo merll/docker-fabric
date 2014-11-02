@@ -1,13 +1,12 @@
 .. _getting_started:
 
-===============
 Getting started
 ===============
 
 In order to connect with the Docker service, make sure that
 
 1. Docker is installed on the remote machine;
-2. `socat` is installed, if you are using the SSH tunnel;
+2. **socat** is installed, if you are using the SSH tunnel;
 3. and the SSH user has access to the service.
 
 (For details, refer to :ref:`installation_and_configuration`).
@@ -25,6 +24,7 @@ which speeds up access to Docker significantly.
 
 Short examples::
 
+   from dockerfabric.apiclient import docker_fabric
    docker_fabric().version()
 
 returns version information from the installed Docker service. This function is directly passed through to

@@ -1,11 +1,10 @@
 .. _installation_and_configuration:
 
-==============================
 Installation and configuration
 ==============================
 
 Installation
-============
+------------
 The current stable release, published on PyPI_, can be installed using the following command:
 
 .. code-block:: bash
@@ -21,7 +20,7 @@ For importing YAML configurations for Docker-Map_, you can install Docker-Fabric
 
 
 Dependencies
-------------
+^^^^^^^^^^^^
 The following libraries will be automatically installed from PyPI:
 
 * Fabric (tested with >=1.8.0)
@@ -31,26 +30,27 @@ The following libraries will be automatically installed from PyPI:
 
 
 Docker service
---------------
+^^^^^^^^^^^^^^
 Docker needs to be installed on the target machine. On Ubuntu, you can use the task `install_docker` for automatically
 installing and configuring the latest release. The following configuration is only needed if the service has been
 installed otherwise.
 
 
 Socat
------
+^^^^^
 The tool Socat_ is needed in order to tunnel local TCP-IP connections to a unix socket on the target machine. You can
 either install it yourself and transfer the binary using the Fabric task `install_socat`, or use the task `build_socat`
 (currently only Ubuntu) to build it directly on your target machine.
 
 
 Configuration
-=============
+-------------
+
 Docker service
---------------
+^^^^^^^^^^^^^^
 On every target machine, Docker-Fabric needs access to the Docker Remote API and (optionally) to the command line
-client. In the default docker configuration, this means that the connecting SSH user needs to be in the `docker`
-user group, in order to have access to the unix socket.
+client. With the default Docker configuration, this requires for the connecting SSH user to be in the `docker`
+user group. The group assignment provides access to the unix socket.
 
 For assigning an existing user to that group, run
 
@@ -60,29 +60,30 @@ For assigning an existing user to that group, run
 
 
 Note that if you run this command with the same user (using `sudo`), you need to re-connect. Use
-`fabric.network.disconnect_all`_ if necessary.
+:func:`~fabric.network.disconnect_all` if necessary.
 
 
 Tasks
------
+^^^^^
 If you plan to use the built-in tasks, include the module in your fabfile module (e.g. `fabfile.py`). Most likely
 you might want to assign an alias for the task namespace::
 
     from dockerfabric import tasks as docker
 
 
+.. _fabric_env:
+
 Environment
------------
-In order to customize the general behavior of the client, the following variables can be set in Fabric's
-:data:`~fabric.state.env`:
+^^^^^^^^^^^
+In order to customize the general behavior of the client, the following variables can be set in `Fabric's env`_:
 
 * ``docker_tunnel_remote_port``: Optional; to be set if the existing SSH connection will be used for tunnelling a local
   connection to the Docker Remote API. If a TCP connection is tunneled, this port should be the endpoint of the remote
-  API (e.g. 443 if Docker is exposing a local HTTPS service); for unix connections, this will be used by `socat` to
+  API (e.g. 443 if Docker is exposing a local HTTPS service); for unix connections, this will be used by **socat** to
   forward traffic between the SSH tunnel and the Docker socket.
 * ``docker_base_url``: Optional, but to be set if the local connection is not on the local machine. If
-  `docker_tunnel_remote_port`` is set, will be tunnelled through SSH, otherwise be simply passed to ``docker-py``. When
-  tunneling an URL starting with ``http+unix:``, ``unix:``, or ``/`` (indicating a file path), `socat` will be used to
+  ``docker_tunnel_remote_port`` is set, will be tunnelled through SSH, otherwise be simply passed to ``docker-py``. When
+  tunneling an URL starting with ``http+unix:``, ``unix:``, or ``/`` (indicating a file path), **socat** will be used to
   bridge the TCP-IP connection to the socket. For example, set it to ``/var/run/docker.sock`` if Docker is running on the
   same machine that you are connecting to.
 * ``docker_tunnel_local_port``: Optional; set this, if you are using a tunneled socket connection and for some reason
@@ -95,9 +96,9 @@ In order to customize the general behavior of the client, the following variable
 
 
 Additionally, the following variables are specific for Docker registry access. They can be overridden in the relevant
-commands (:func:`~dockerfabric.apiclient.DockerFabricClient.login`,
-:func:`~dockerfabric.apiclient.DockerFabricClient.push`, and
-:func:`~dockerfabric.apiclient.DockerFabricClient.pull`).
+commands (:meth:`~dockerfabric.apiclient.DockerFabricClient.login`,
+:meth:`~dockerfabric.apiclient.DockerFabricClient.push`, and
+:meth:`~dockerfabric.apiclient.DockerFabricClient.pull`).
 
 * ``docker_registry_user``: User name to use when authenticating against a Docker registry.
 * ``docker_registry_password``: Password to use when authenticating against a Docker registry.
@@ -109,7 +110,7 @@ commands (:func:`~dockerfabric.apiclient.DockerFabricClient.login`,
 
 
 Checking the setup
-==================
+------------------
 For checking if everything is set up properly, you can run the included task `version`. For example, running
 
 .. code-block:: bash
@@ -121,7 +122,7 @@ against a local Vagrant machine (using the default setup, only allowing socket c
 port 2224 should show a similar result::
 
     [127.0.0.1] Executing task 'docker.check_version'
-    socat TCP-LISTEN:2224,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+    socat TCP-LISTEN:2224,bind=127.0.0.1,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
     KernelVersion: 3.13.0-34-generic
     Arch:          amd64
     ApiVersion:    1.14
@@ -137,4 +138,4 @@ port 2224 should show a similar result::
 .. _PyPI: https://pypi.python.org/pypi/docker-fabric
 .. _Docker-Map: https://pypi.python.org/pypi/docker-map
 .. _Socat: http://www.dest-unreach.org/socat/
-.. _fabric.network.disconnect_all: http://fabric.readthedocs.org/en/latest/api/core/network.html#fabric.network.disconnect_all
+.. _Fabric's env: http://docs.fabfile.org/en/latest/usage/env.html

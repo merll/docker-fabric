@@ -1,4 +1,4 @@
-docker-fabric
+Docker-Fabric
 =============
 
 Integration of Docker deployments into Fabric.
@@ -6,14 +6,14 @@ Integration of Docker deployments into Fabric.
 
 Project: https://github.com/merll/docker-fabric
 
-Docs: http://docker-fabric.readthedocs.org/en/latest/
+Docs: https://docker-fabric.readthedocs.org/en/latest/
 
 
 Overview
 ========
 With a few preparations, Docker images can easily be generated and tested on development
 machines, and transferred on to a production environment.  This package is based on
-[docker-map](https://github.com/merll/docker-map), and helps to use Docker on
+[Docker-Map](https://github.com/merll/docker-map), and helps to use Docker on
 Fabric-based deployments. Wherever possible, the library makes calls to the Remote API;
 for certain features (e.g. extracting container contents) the Docker command-line
 interface (CLI) is used.
@@ -71,9 +71,3 @@ Thanks to [lfasnacht](https://github.com/lfasnacht) for publishing an implementa
 a local tunnel to a Fabric client in the [pull request 939 of Fabric](https://github.com/fabric/fabric/pull/939).
 
 Once it has been merged into Fabric, it may be removed from this package.
-
-
-Todo
-====
-* More detailed documentation.
-* Unit tests.
