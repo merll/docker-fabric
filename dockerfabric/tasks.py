@@ -4,20 +4,21 @@ from __future__ import unicode_literals
 from datetime import datetime
 import itertools
 import os
-from fabric.api import cd, env, get, put, run, sudo, task
+from fabric.api import cd, env, get, put, run, runs_once, sudo, task
 from fabric.utils import error
 import six
-from dockerfabric.utils.output import stdout_result
 
 from dockermap.shortcuts import curl, untargz
 from dockermap.utils import expand_path
-from utils.files import temp_dir
-from utils.net import get_ip4_address, get_ip6_address
-from utils.users import assign_user_groups
 from . import DEFAULT_SOCAT_VERSION, cli
 from .apiclient import DOCKER_LOG_FORMAT, docker_fabric
+from .utils.files import temp_dir
+from .utils.net import get_ip4_address, get_ip6_address
+from .utils.output import stdout_result
+from .utils.users import assign_user_groups
 
 
+SIMPLE_LOG_FORMAT = '[{0}] {1}'
 SOCAT_URL = 'http://www.dest-unreach.org/socat/download/socat-{0}.tar.gz'
 IMAGE_COLUMNS = ('Id', 'RepoTags', 'ParentId', 'Created', 'VirtualSize', 'Size')
 CONTAINER_COLUMNS = ('Id', 'Names', 'Image', 'Command', 'Ports', 'Status', 'Created')
@@ -93,6 +94,7 @@ def build_socat():
 
 
 @task
+@runs_once
 def fetch_socat(local):
     """
     Fetches the `socat` binary from a remote host.
@@ -105,15 +107,6 @@ def fetch_socat(local):
     if os.path.exists(local_file) and not os.path.isfile(local_file):
         local_file = os.path.join(local, 'socat')
     get(remote_file, local_file)
-
-
-@task
-def reset_socat(use_sudo=False):
-    output = stdout_result('ps -o pid -C socat', quiet=True)
-    pids = output.split('\n')[1:]
-    print("Removing process(es) with id(s) {0}.".format(', '.join(pids)))
-    which = sudo if use_sudo else run
-    which('kill {0}'.format(' '.join(pids)), quiet=True)
 
 
 @task
@@ -134,12 +127,29 @@ def install_socat(src):
 
 
 @task
+def reset_socat(use_sudo=False):
+    """
+    Finds and closes all processes of `socat`.
+
+    :param use_sudo: Use `sudo` command. As Docker-Fabric does not run `socat` with `sudo`, this is by default set to
+      ``False``. Setting it to ``True`` could unintentionally remove instances from other users.
+    :type use_sudo: bool
+    """
+    output = stdout_result('ps -o pid -C socat', quiet=True)
+    pids = output.split('\n')[1:]
+    print("Removing process(es) with id(s) {0}.".format(', '.join(pids)))
+    which = sudo if use_sudo else run
+    which('kill {0}'.format(' '.join(pids)), quiet=True)
+
+
+@task
 def version():
     """
     Shows version information of the remote Docker service, similar to ``docker version``.
     """
     output = docker_fabric().version()
     col_len = max(map(len, output.keys())) + 1
+    print(SIMPLE_LOG_FORMAT.format(env.host_string, ''))
     for k, v in six.iteritems(output):
         print('{0:{1}} {2}'.format(''.join((k, ':')), col_len, v))
 
@@ -152,7 +162,7 @@ def get_ip(interface_name='docker0'):
     :param interface_name: Name of the network interface. Default is ``docker0``.
     :type interface_name: unicode
     """
-    print(get_ip4_address(interface_name))
+    print(SIMPLE_LOG_FORMAT.format(env.host_string, get_ip4_address(interface_name)))
 
 
 @task
@@ -165,7 +175,7 @@ def get_ipv6(interface_name='docker0', expand=False):
     :param expand: Expand the abbreviated IP6 address. Default is ``False``.
     :type expand: bool
     """
-    print(get_ip6_address(interface_name, expand=expand))
+    print(SIMPLE_LOG_FORMAT.format(env.host_string, get_ip6_address(interface_name, expand=expand)))
 
 
 @task
@@ -229,6 +239,7 @@ def remove_all_containers():
 
 
 @task
+@runs_once
 def save_image(image, filename=None):
     """
     Saves a Docker image from the remote to a local files. For performance reasons, uses the Docker command line client
