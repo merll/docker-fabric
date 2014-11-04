@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric.network import needs_host
-from fabric.state import env, connections
+from fabric.state import env
 
+from . import SIMPLE_LOG_FORMAT
 from .base import ConnectionDict
 from .tunnel import LocalTunnel
 
 
 class SocketTunnels(ConnectionDict):
     """
-    Cache for `socat` tunnels to the remote machine.
+    Cache for **socat** tunnels to the remote machine.
 
-    Instantiation of :class:`SocketTunnel` can be configured with ``env.socat_fork`` and ``env.socat_quiet``, setting
-    the ``fork`` and ``quiet`` keyword arguments.
+    Instantiation of :class:`SocketTunnel` can be configured with ``env.socat_quiet``, setting
+    the ``quiet`` keyword argument.
     """
     def __getitem__(self, item):
         """
@@ -22,10 +22,10 @@ class SocketTunnels(ConnectionDict):
         :return: Socket tunnel
         :rtype: SocketTunnel
         """
-        remote_socket, remote_port, local_port = item
+        remote_socket, local_port = item
         key = env.host_string, remote_socket
-        svc = self.get(key, lambda: SocketTunnel(remote_socket, remote_port, local_port,
-                                                 env.get('socat_fork', True), env.get('socat_quiet', False)))
+        svc = self.get(key, lambda: SocketTunnel(remote_socket, local_port,
+                                                 env.get('socat_quiet', True)))
         svc.connect()
         return svc
 
@@ -33,79 +33,30 @@ class SocketTunnels(ConnectionDict):
 socat_tunnels = SocketTunnels()
 
 
-class SocatService(object):
-    """
-    Utility class for running `socat`.
-
-    :param dest: Destination parameter for `socat`.
-    :type dest: unicode
-    :param src: Source parameter for `socat`.
-    :type src: unicode
-    :param quiet: Optional, default is ``False``. If set to ``True``, the command line on the SSH channel will not
-      be written to `stdout`.
-    :type quiet: bool
-    """
-    def __init__(self, dest, src, quiet=False):
-        self.dest = dest
-        self.src = src
-        self.quiet = quiet
-        self.channel = None
-
-    @needs_host
-    def connect(self):
-        """
-        Opens a channel through a SSH connection to ``env.host_string`` (which will be opened by Fabric if necessary)
-        and launches `socat`.
-        """
-        transport = connections[env.host_string].get_transport()
-        self.channel = transport.open_channel('session')
-        cmd = ' '.join(('socat', self.dest, self.src))
-        if not self.quiet:
-            print(cmd)
-        self.channel.exec_command(cmd)
-
-    def close(self):
-        """
-        Closes the channel for `socat`.
-        """
-        self.channel.close()
-
-
 class SocketTunnel(LocalTunnel):
     """
-    Establish a tunnel from the local machine to the SSH host and from there start a `socat` process for forwarding
-    traffic between the remote-end TCP port and a Unix socket.
+    Establish a tunnel from the local machine to the SSH host and from there start a **socat** process for forwarding
+    traffic between the remote-end `stdout` and a Unix socket.
 
     :param remote_socket: Unix socket to connect to on the remote machine.
     :type remote_socket: unicode
-    :param remote_port: Remote-end TCP port to use for the tunnel.
-    :type remote_port: int
     :param local_port: Local TCP port to use for the tunnel.
     :type local_port: int
-    :param fork: Adds the options `fork` and `reuseaddr` to `socat`, defaults to ``True``. Avoids re-connection
-      problems, but keeps `socat` running after all connections close. Can be set to ``False`` for added security.
-    :type fork: bool
-    :param quiet: If set to ``True``, the command line on the SSH channel will not be written to `stdout`.
+    :param quiet: If set to ``False``, the **socat** command line on the SSH channel will be written to `stdout`.
     :type quiet: bool
     """
-    def __init__(self, remote_socket, remote_port, local_port, fork=True, quiet=False):
-        dest = 'TCP-LISTEN:{0},bind=127.0.0.1{1}'.format(remote_port, ',fork,reuseaddr' if fork else '')
+    def __init__(self, remote_socket, local_port, quiet=True):
+        dest = 'STDIO'
         src = 'UNIX-CONNECT:{0}'.format(remote_socket)
-        self.socat_service = SocatService(dest, src, quiet)
-        super(SocketTunnel, self).__init__(remote_port, bind_port=local_port)
+        self.quiet = quiet
+        self._socat_cmd = ' '.join(('socat', dest, src))
+        super(SocketTunnel, self).__init__(local_port)
 
-    def connect(self):
-        """
-        Establishes the local tunnel and the `socat` channel.
-        """
-        self.socat_service.connect()
-        super(SocketTunnel, self).connect()
-
-    def close(self):
-        """
-        Closes the `socat` channel and the local tunnel.
-        """
-        try:
-            super(SocketTunnel, self).close()
-        finally:
-            self.socat_service.close()
+    def get_channel(self, transport, remote_addr, local_peer):
+        channel = transport.open_channel('session')
+        if channel is None:
+            raise Exception("Failed to open channel on the SSH server.")
+        if not self.quiet:
+            print(SIMPLE_LOG_FORMAT.format(env.host_string, self._socat_cmd))
+        channel.exec_command(self._socat_cmd)
+        return channel

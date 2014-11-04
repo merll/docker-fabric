@@ -6,12 +6,10 @@ from docker import client as docker
 from fabric.api import env
 
 from dockermap.map import base, client
+from . import DOCKER_LOG_FORMAT
 from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
-
-
-DOCKER_LOG_FORMAT = "[{0}] docker: {1}"
 
 
 class DockerFabricConnections(ConnectionDict):
@@ -22,6 +20,8 @@ class DockerFabricConnections(ConnectionDict):
         """
         Create a new connection, or return an existing one from the cache. Uses Fabric's current ``env.host_string``
         and the URL to the Docker service.
+
+        :rtype: DockerFabricClient
         """
         key = env.get('host_string'), env.get('docker_base_url')
         return self.get(key, DockerFabricClient)
@@ -70,9 +70,9 @@ class DockerFabricClient(base.DockerClientWrapper):
             p1, __, p2 = url.partition(':')
             remote_host = p2 or p1
             if url.startswith('http+unix:') or url.startswith('unix:') or url.startswith('/'):
-                self._tunnel = socat_tunnels[(remote_host, remote_port, local_port)]
+                self._tunnel = socat_tunnels[(remote_host, local_port)]
             else:
-                self._tunnel = local_tunnels[(remote_port, remote_host, local_port)]
+                self._tunnel = local_tunnels[(remote_host, remote_port, 'localhost', local_port)]
             conn_url = ':'.join(('tcp://127.0.0.1', six.text_type(local_port)))
         else:
             self._socket_tunnel = None

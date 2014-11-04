@@ -122,7 +122,7 @@ against a local Vagrant machine (using the default setup, only allowing socket c
 port 2224 should show a similar result::
 
     [127.0.0.1] Executing task 'docker.check_version'
-    socat TCP-LISTEN:2224,bind=127.0.0.1,fork,reuseaddr UNIX-CONNECT:/var/run/docker.sock
+    [127.0.0.1]
     KernelVersion: 3.13.0-34-generic
     Arch:          amd64
     ApiVersion:    1.14

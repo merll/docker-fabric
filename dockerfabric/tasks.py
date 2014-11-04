@@ -10,7 +10,7 @@ import six
 
 from dockermap.shortcuts import curl, untargz
 from dockermap.utils import expand_path
-from . import DEFAULT_SOCAT_VERSION, cli
+from . import DEFAULT_SOCAT_VERSION, SIMPLE_LOG_FORMAT, cli
 from .apiclient import DOCKER_LOG_FORMAT, docker_fabric
 from .utils.files import temp_dir
 from .utils.net import get_ip4_address, get_ip6_address
@@ -18,7 +18,6 @@ from .utils.output import stdout_result
 from .utils.users import assign_user_groups
 
 
-SIMPLE_LOG_FORMAT = '[{0}] {1}'
 SOCAT_URL = 'http://www.dest-unreach.org/socat/download/socat-{0}.tar.gz'
 IMAGE_COLUMNS = ('Id', 'RepoTags', 'ParentId', 'Created', 'VirtualSize', 'Size')
 CONTAINER_COLUMNS = ('Id', 'Names', 'Image', 'Command', 'Ports', 'Status', 'Created')

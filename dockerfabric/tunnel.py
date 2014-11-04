@@ -23,7 +23,7 @@ class LocalTunnels(ConnectionDict):
         :return: Local tunnel
         :rtype: LocalTunnel
         """
-        remote_host, remote_port, bind_port, bind_host = item
+        remote_host, remote_port, bind_host, bind_port = item
         key = remote_host, remote_port
         tun = self.get(key, lambda: LocalTunnel(remote_port, remote_host, bind_port, bind_host))
         tun.connect()
@@ -70,39 +70,35 @@ def _forwarder(chan, sock):
 
 class LocalTunnel(object):
     """
-    Posted as PR #939 of Fabric: https://github.com/fabric/fabric/pull/939
+    Adapted from PR #939 of Fabric: https://github.com/fabric/fabric/pull/939
 
     Forward a local port to a given host and port on the remote side.
 
-    For example, you can use this to run local commands which connect to a
-    database which is only bound to localhost on server:
-
-    # Map localhost:6379 on the client to localhost:6379 on the server,
-    # so that the local 'redis-cli' program ends up speaking to the remote
-    # redis-server.
-    with local_tunnel(6379):
-    local("redis-cli -i")
-
-    ``local_tunnel`` accepts up to three arguments:
-
-    * ``remote_port`` (mandatory) is the remote port to connect to.
-    * ``remote_host`` (optional) is the remote host to connect to; the
-      default is ``localhost``.
-    * ``bind_port`` (optional) is the local port to bind; the default
-      is ``remote_port``.
-    * ``bind_host`` (optional) is the local address (DNS name or
-      IP address) on which to bind; the default is ``localhost``.
+    :param remote_port: Remote port to forward connections to.
+    :type remote_port: int
+    :param remote_host: Host to connect to. Optional, default is ``localhost``.
+    :type remote_host: unicode
+    :param bind_port: Local port to bind to. Optional, default is same as ``remote_port``.
+    :type bind_port: int
+    :param bind_host: Local address to bind to. Optional, default is ``localhost``.
     """
-    def __init__(self, remote_port, remote_host=None, bind_port=None, bind_host=None):
+    def __init__(self, remote_port, remote_host=None, bind_port=None, bind_host=None, remote_cmd=None):
         self.remote_port = remote_port
         self.remote_host = remote_host or 'localhost'
         self.bind_port = bind_port or remote_port
         self.bind_host = bind_host or 'localhost'
+        self.remote_cmd = remote_cmd
         self.sockets = []
         self.channels = []
         self.threads = []
         self.listening_socket = None
         self.listening_thread = None
+
+    def get_channel(self, transport, remote_addr, local_peer):
+        channel = transport.open_channel('direct-tcpip', remote_addr, local_peer)
+        if channel is None:
+            raise Exception('Incoming request to %s:%d was rejected by the SSH server.' % remote_addr)
+        return channel
 
     @needs_host
     def connect(self):
@@ -128,12 +124,7 @@ class LocalTunnel(object):
 
         def accept(listen_sock, transport, remote_addr):
             accept_sock, local_peer = listen_sock.accept()
-            channel = transport.open_channel('direct-tcpip',
-                                             remote_addr,
-                                             local_peer)
-
-            if channel is None:
-                raise Exception('Incoming request to %s:%d was rejected by the SSH server.' % remote_addr)
+            channel = self.get_channel(transport, remote_addr, local_peer)
 
             handler = ThreadHandler('fwd', _forwarder, channel, accept_sock)
 
@@ -146,9 +137,9 @@ class LocalTunnel(object):
         self.threads = []
         self.listening_socket = listening_socket
         self.listening_thread = ThreadHandler('local_bind', listener_thread_main,
-                                               listening_socket, accept,
-                                               connections[env.host_string].get_transport(),
-                                               (self.remote_host, self.remote_port))
+                                              listening_socket, accept,
+                                              connections[env.host_string].get_transport(),
+                                              (self.remote_host, self.remote_port))
 
     def close(self):
         for sock, chan, th in zip(self.sockets, self.channels, self.threads):

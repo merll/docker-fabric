@@ -69,5 +69,3 @@ Contributions
 =============
 Thanks to [lfasnacht](https://github.com/lfasnacht) for publishing an implementation for
 a local tunnel to a Fabric client in the [pull request 939 of Fabric](https://github.com/fabric/fabric/pull/939).
-
-Once it has been merged into Fabric, it may be removed from this package.

@@ -66,11 +66,6 @@ only exposed over a Unix domain socket, the client additionally launches a **soc
 forwarding traffic between the remote tunnel endpoint and that Unix socket. That way, no permanent reconfiguration of
 Docker is necessary.
 
-.. note:: Using **socat** temporarily exposes a TCP-IP port, so for the time that it is running it has the same effect
-          as reconfiguring Docker to open the port. This implies that anyone with direct access to the machine could
-          control the Docker service. In order to keep the system secure, ensure that the firewall does not allow
-          incoming connections except for intended ports. For additional security, consider
-          `running Docker with HTTPS`_.
 
 Tunnel configuration
 ^^^^^^^^^^^^^^^^^^^^
@@ -86,31 +81,23 @@ The :class:`~dockerfabric.apiclient.DockerFabricClient` differentiates between t
 
    - When ``base_url`` additionally indicates a Unix domain docket, i.e. it is prefixed with any ``http+unix:``,
      ``unix:``, or ``/``, **socat** is started on the remote end and sends traffic between the remote tunnel endpoint
-     and the socket. The setting ``tunnel_remote_port`` decides which port to expose here.
+     and the socket.
    - In other cases of ``base_url``, the client attempts to connect directly through the established tunnel to the
-     Docker service on the remote end, which has to be exposed to a local port.
+     Docker service on the remote end, which has to be exposed to the local port set in ``tunnel_remote_port``.
 
 It is possible to set the locally opened port with ``tunnel_local_port`` -- by default it is identical with
 ``tunnel_remote_port``. As there needs to be a separate local port for every connection,
-:class:`~dockerfabric.apiclient.DockerFabricClient` increases this by one for each host. From version 0.1.4, this also
-works with :ref:`parallel tasks in Fabric <fabric:parallel-execution>`.
+:class:`~dockerfabric.apiclient.DockerFabricClient` increases this by one for each additional host. From version 0.1.4,
+this also works with :ref:`parallel tasks in Fabric <fabric:parallel-execution>`.
 
 Socat options
 ^^^^^^^^^^^^^
-**Socat** only binds to the localhost address (from version 0.1.4). Furthermore it can be configured with the following
-``env`` variables:
+From version 0.2.0, **socat** does not expose a port on the remote end and therefore does not require further
+configuration. For information purposes, the client can however be set to echo the command to `stdout` by setting
+``env.socat_quiet`` to ``True``.
 
-* ``socat_fork``: Adds the options `fork` and `reuseaddr` to the **socat** command line. The default setting has been
-  set to ``True``, in order to avoid problems on frequent re-connections. With this setting however, the process does
-  not close along with the connection and therefore it may be safer to set it to ``False``.
-
-  The utility task ``reset_socat`` removes **socat** processes, in case of occasional re-connection issues.
-* ``socat_quiet``: By default the command line is echoed to `stdout` for informational purposes. Setting this variable
-  to ``True`` suppresses that.
-
-.. note:: Currently error handling related to **socat** needs improvement. Most of all, potential error messages
-          of the utility (or a missing binary) are not logged to `stdout`. This is planned for improvement in future
-          version if Docker-Fabric.
+The utility task ``reset_socat`` removes **socat** processes, in case of occasional re-connection issues. Since
+from version 0.2.0, **socat** no longer forks on accepting a connection, this should no longer occur.
 
 
 Configuration example
@@ -125,7 +112,7 @@ Consider the following lines in your project's ``fabfile.py``::
 With this configuration, ``docker_fabric()`` in a task running on each host
 
 #. opens a channel on the existing SSH connection and launches **socat** on the remote, forwarding traffic between
-   port 2224 and ``/var/run/docker.sock``;
+   the remote `stdout` and ``/var/run/docker.sock``;
 #. opens a tunnel through the existing SSH connection on port 2224 (increased by 1 for every additional host);
 #. cancels operations that take longer than 20 seconds.
 
