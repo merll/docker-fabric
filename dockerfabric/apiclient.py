@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
 import six
 from docker import client as docker
 from fabric.api import env
@@ -79,7 +80,7 @@ class DockerFabricClient(base.DockerClientWrapper):
             conn_url = url
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout, **kwargs)
 
-    def push_log(self, info):
+    def push_log(self, info, level=logging.INFO):
         """
         Prints the log as usual for fabric output, enhanced with the prefix "docker".
 
@@ -120,12 +121,12 @@ class DockerFabricClient(base.DockerClientWrapper):
         self.push_log("Receiving tarball for resource '{0}:{1}' and storing as {2}".format(container, resource, local_filename))
         super(DockerFabricClient, self).copy_resource(container, resource, local_filename)
 
-    def cleanup_containers(self):
+    def cleanup_containers(self, include_initial=False, exclude=None):
         """
         Identical to :meth:`dockermap.map.base.DockerClientWrapper.copy_resource` with additional logging.
         """
         self.push_log("Generating list of stopped containers.")
-        super(DockerFabricClient, self).cleanup_containers()
+        super(DockerFabricClient, self).cleanup_containers(include_initial=include_initial, exclude=exclude)
 
     def cleanup_images(self, remove_old=False):
         """
