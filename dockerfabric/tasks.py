@@ -52,10 +52,10 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
         return 0
 
     print(DOCKER_LOG_FORMAT.format(env.host_string, ''))
-    rows = [[_get_column(i, col) for col in columns] for i in data_dict]
+    rows = [[[c] for c in columns]]
+    rows.extend([_get_column(i, col) for col in columns] for i in data_dict)
     col_lens = map(max, (map(_max_len, c) for c in zip(*rows)))
     row_format = '  '.join('{{{0}:{1}}}'.format(i, l) for i, l in enumerate(col_lens))
-    print(row_format.format(*columns))
     for row in rows:
         for c in itertools.izip_longest(*row, fillvalue=''):
             print(row_format.format(*c))
