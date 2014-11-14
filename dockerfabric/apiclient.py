@@ -89,6 +89,20 @@ class DockerFabricClient(base.DockerClientWrapper):
         """
         print(DOCKER_LOG_FORMAT.format(env.host_string, info))
 
+    def push_progress(self, status, object_id, progress):
+        """
+        Prints progress information.
+
+        :param status: Status text.
+        :type status: unicode
+        :param object_id: Object that the progress is reported on.
+        :type object_id: unicode
+        :param progress: Progress bar.
+        :type progress: unicode
+        """
+        fmt = base.LOG_PROGRESS_FORMAT.format
+        print(fmt(status, object_id, progress))
+
     def close(self):
         """
         Closes the connection and any tunnels created for it.
