@@ -76,7 +76,7 @@ class DockerFabricClient(base.DockerClientWrapper):
                 self._tunnel = local_tunnels[(remote_host, remote_port, 'localhost', local_port)]
             conn_url = ':'.join(('tcp://127.0.0.1', six.text_type(local_port)))
         else:
-            self._socket_tunnel = None
+            self._tunnel = None
             conn_url = url
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout, **kwargs)
 
