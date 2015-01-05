@@ -4,9 +4,9 @@ from __future__ import unicode_literals
 import logging
 import six
 from docker import client as docker
-from fabric.api import env
+from fabric.api import env, settings
 
-from dockermap.map import base, client
+from dockermap.map import base, client, config
 from . import DOCKER_LOG_FORMAT
 from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
@@ -17,18 +17,24 @@ class DockerFabricConnections(ConnectionDict):
     """
     Cache for connections to the Docker Remote API.
     """
-    def get_connection(self):
+    def get_connection(self, *args, **kwargs):
         """
         Create a new connection, or return an existing one from the cache. Uses Fabric's current ``env.host_string``
         and the URL to the Docker service.
 
+        :param args: Additional arguments for the client constructor, if a new client has to be instantiated.
+        :param kwargs: Additional keyword args for the client constructor, if a new client has to be instantiated.
         :rtype: DockerFabricClient
         """
         key = env.get('host_string'), env.get('docker_base_url')
-        return self.get(key, DockerFabricClient)
+        return self.get(key, DockerFabricClient, *args, **kwargs)
 
 
 docker_fabric = DockerFabricConnections().get_connection
+
+
+class DockerClientConfiguration(config.ClientConfiguration):
+    init_kwargs = config.ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
 
 
 class DockerFabricClient(base.DockerClientWrapper):
@@ -274,14 +280,44 @@ class ContainerFabric(client.MappingDockerClient):
     """
     Convenience class for using a :class:`~dockermap.map.container.ContainerMap` on a :class:`DockerFabricClient`.
 
-    :param container_map: Container map.
-    :type container_map: dockermap.map.container.ContainerMap
+    :param container_maps: Container map or a tuple / list thereof.
+    :type container_maps: list[dockermap.map.container.ContainerMap] or dockermap.map.container.ContainerMap
+    :param clients: Optional dictionary of Docker client configuration objects.
+    :type clients: dict[unicode, DockerClientConfiguration]
+    :param kwargs: Additional keyword args for :meth:`dockermap.map.client.MappingDockerClient.__init__`
     """
-    def __init__(self, container_map):
-        super(ContainerFabric, self).__init__(container_map, docker_fabric())
+    configuration_class = DockerClientConfiguration
+    client_class = DockerFabricClient
+
+    def __init__(self, container_maps, clients=None, **kwargs):
+        default_client = docker_fabric() if 'host_string' in env and 'docker_base_url' in env else None
+        super(ContainerFabric, self).__init__(container_maps=container_maps, docker_client=default_client,
+                                              clients=clients, **kwargs)
+
+    @classmethod
+    def from_env(cls, docker_maps=None, client_configs=None):
+        all_maps = docker_maps or env.get('docker_maps', ())
+        all_configs = client_configs or env.get('docker_clients', dict())
+        current_clients = dict()
+
+        for c_map in all_maps:
+            map_clients = c_map.clients
+            for map_client in map_clients:
+                if map_client not in current_clients:
+                    client_config = all_configs.get(map_client)
+                    if not client_config:
+                        raise ValueError("Client '{0}' used in map '{1}' not configured.".format(map_client, c_map.name))
+                    client_host = client_config.get('fabric_host')
+                    with settings(host_string=client_host):
+                        current_clients[map_client] = docker_fabric(**client_config.get_init_kwargs()), client_config
+
+        return cls(all_maps, clients=current_clients)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
+
+container_fabric = ContainerFabric.from_env

@@ -9,10 +9,10 @@ port_offset = multiprocessing.Value(ctypes.c_ulong)
 
 
 class ConnectionDict(dict):
-    def get(self, k, d):
+    def get(self, k, d, *args, **kwargs):
         e = super(ConnectionDict, self).get(k)
         if e is None:
-            e = d()
+            e = d(*args, **kwargs)
             self[k] = e
         return e
 
