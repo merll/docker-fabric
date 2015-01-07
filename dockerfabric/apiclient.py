@@ -289,25 +289,47 @@ class ContainerFabric(client.MappingDockerClient):
     configuration_class = DockerClientConfiguration
     client_class = DockerFabricClient
 
-    def __init__(self, container_maps, clients=None, **kwargs):
-        default_client = docker_fabric() if 'host_string' in env and 'docker_base_url' in env else None
+    def __init__(self, container_maps, docker_client=None, clients=None, **kwargs):
+        if docker_client:
+            default_client = docker_client
+        else:
+            default_client = docker_fabric() if 'host_string' in env and 'docker_base_url' in env else None
         super(ContainerFabric, self).__init__(container_maps=container_maps, docker_client=default_client,
                                               clients=clients, **kwargs)
 
     @classmethod
     def from_env(cls, docker_maps=None, client_configs=None):
+        """
+        Alternative constructor for :class:`ContainerFabric`, which instantiates all used clients for all container
+        maps and their configurations.
+
+        :param docker_maps: Tuple of container maps or a single container map.
+        :type docker_maps: list[dockermap.map.container.ContainerMap]
+        :param client_configs: Dictionary of client configurations.
+        :type client_configs: dict[unicode, dockermap.map.config.ClientConfiguration]
+        :return:
+        """
         all_maps = docker_maps or env.get('docker_maps', ())
+        if not isinstance(all_maps, (list, tuple)):
+            env_maps = all_maps,
+        else:
+            env_maps = all_maps
         all_configs = client_configs or env.get('docker_clients', dict())
         current_clients = dict()
 
-        for c_map in all_maps:
-            map_clients = c_map.clients
+        for c_map in env_maps:
+            map_clients = set(c_map.clients)
+            for config_name, c_config in c_map:
+                if c_config.clients:
+                    map_clients.update(c_config.clients)
             for map_client in map_clients:
                 if map_client not in current_clients:
                     client_config = all_configs.get(map_client)
                     if not client_config:
                         raise ValueError("Client '{0}' used in map '{1}' not configured.".format(map_client, c_map.name))
                     client_host = client_config.get('fabric_host')
+                    if not client_host:
+                        raise ValueError("Client '{0}' is configured, but has no 'fabric_host' definition.".format(map_client))
                     with settings(host_string=client_host):
                         current_clients[map_client] = docker_fabric(**client_config.get_init_kwargs()), client_config
 
