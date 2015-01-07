@@ -8,13 +8,9 @@ from .apiclient import container_fabric
 
 
 @task
-def perform(action_name, map_name, config_name):
+def perform(action_name, map_name, config_name, **kwargs):
     cf = container_fabric()
-    cf_method = getattr(cf, action_name)
-    if callable(cf_method):
-        cf_method(config_name, map_name=map_name)
-    else:
-        error("Action '{0}' is not available or not a valid method.".format(action_name))
+    cf.call(action_name, config_name, map_name=map_name, **kwargs)
 
 
 @task
