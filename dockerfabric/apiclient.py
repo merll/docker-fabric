@@ -13,6 +13,9 @@ from .socat import socat_tunnels
 from .tunnel import local_tunnels
 
 
+progress_fmt = base.LOG_PROGRESS_FORMAT.format
+
+
 class DockerFabricConnections(ConnectionDict):
     """
     Cache for connections to the Docker Remote API.
@@ -106,8 +109,7 @@ class DockerFabricClient(base.DockerClientWrapper):
         :param progress: Progress bar.
         :type progress: unicode
         """
-        fmt = base.LOG_PROGRESS_FORMAT.format
-        fastprint(fmt(status, object_id, progress))
+        fastprint(progress_fmt(status, object_id, progress), end='\n')
 
     def close(self):
         """
