@@ -16,6 +16,18 @@ from .tunnel import local_tunnels
 progress_fmt = base.LOG_PROGRESS_FORMAT.format
 
 
+def _get_default_config():
+    clients = env.get('docker_clients')
+    host_string = env.get('host_string')
+    if not host_string or not clients:
+        return None
+    for c in clients.values():
+        host = c.get('fabric_host')
+        if host == host_string:
+            return c
+    return None
+
+
 class DockerFabricConnections(ConnectionDict):
     """
     Cache for connections to the Docker Remote API.
@@ -30,6 +42,11 @@ class DockerFabricConnections(ConnectionDict):
         :rtype: DockerFabricClient
         """
         key = env.get('host_string'), env.get('docker_base_url')
+        client_config = _get_default_config()
+        if client_config:
+            c_kwargs = client_config.get_init_kwargs()
+            c_kwargs.update(kwargs)
+            return self.get(key, DockerFabricClient, **c_kwargs)
         return self.get(key, DockerFabricClient, *args, **kwargs)
 
 
@@ -294,8 +311,11 @@ class ContainerFabric(client.MappingDockerClient):
     def __init__(self, container_maps, docker_client=None, clients=None, **kwargs):
         if docker_client:
             default_client = docker_client
+        elif 'docker_base_url' in env:
+            default_config = _get_default_config()
+            default_client = docker_fabric(**default_config.get_init_kwargs()) if default_config else None
         else:
-            default_client = docker_fabric() if 'host_string' in env and 'docker_base_url' in env else None
+            default_client = None
         super(ContainerFabric, self).__init__(container_maps=container_maps, docker_client=default_client,
                                               clients=clients, **kwargs)
 
