@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 from fabric.state import env
+from fabric.utils import puts
 
-from . import SIMPLE_LOG_FORMAT
 from .base import ConnectionDict
 from .tunnel import LocalTunnel
 
@@ -57,6 +57,6 @@ class SocketTunnel(LocalTunnel):
         if channel is None:
             raise Exception("Failed to open channel on the SSH server.")
         if not self.quiet:
-            print(SIMPLE_LOG_FORMAT.format(env.host_string, self._socat_cmd))
+            puts(self._socat_cmd)
         channel.exec_command(self._socat_cmd)
         return channel

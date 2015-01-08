@@ -5,13 +5,13 @@ from datetime import datetime
 import itertools
 import os
 from fabric.api import cd, env, get, put, run, runs_once, sudo, task
-from fabric.utils import error
+from fabric.utils import error, puts, fastprint
 import six
 
 from dockermap.shortcuts import curl, untargz
 from dockermap.utils import expand_path
-from . import DEFAULT_SOCAT_VERSION, SIMPLE_LOG_FORMAT, cli
-from .apiclient import DOCKER_LOG_FORMAT, docker_fabric
+from . import DEFAULT_SOCAT_VERSION, cli
+from .apiclient import docker_fabric
 from .utils.files import temp_dir
 from .utils.net import get_ip4_address, get_ip6_address
 from .utils.output import stdout_result
@@ -51,14 +51,15 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
             return max(map(len, col_data))
         return 0
 
-    print(DOCKER_LOG_FORMAT.format(env.host_string, ''))
+    puts('')
     rows = [[[c] for c in columns]]
     rows.extend([_get_column(i, col) for col in columns] for i in data_dict)
     col_lens = map(max, (map(_max_len, c) for c in zip(*rows)))
     row_format = '  '.join('{{{0}:{1}}}'.format(i, l) for i, l in enumerate(col_lens))
     for row in rows:
         for c in itertools.izip_longest(*row, fillvalue=''):
-            print(row_format.format(*c))
+            fastprint(row_format.format(*c), end='\n', flush=False)
+    fastprint('', flush=True)
 
 
 @task
@@ -136,7 +137,7 @@ def reset_socat(use_sudo=False):
     """
     output = stdout_result('ps -o pid -C socat', quiet=True)
     pids = output.split('\n')[1:]
-    print("Removing process(es) with id(s) {0}.".format(', '.join(pids)))
+    puts("Removing process(es) with id(s) {0}.".format(', '.join(pids)))
     which = sudo if use_sudo else run
     which('kill {0}'.format(' '.join(pids)), quiet=True)
 
@@ -148,9 +149,10 @@ def version():
     """
     output = docker_fabric().version()
     col_len = max(map(len, output.keys())) + 1
-    print(SIMPLE_LOG_FORMAT.format(env.host_string, ''))
+    puts('')
     for k, v in six.iteritems(output):
-        print('{0:{1}} {2}'.format(''.join((k, ':')), col_len, v))
+        fastprint('{0:{1}} {2}'.format(''.join((k, ':')), col_len, v), end='\n', flush=False)
+    fastprint('', flush=True)
 
 
 @task
@@ -161,7 +163,7 @@ def get_ip(interface_name='docker0'):
     :param interface_name: Name of the network interface. Default is ``docker0``.
     :type interface_name: unicode
     """
-    print(SIMPLE_LOG_FORMAT.format(env.host_string, get_ip4_address(interface_name)))
+    puts(get_ip4_address(interface_name))
 
 
 @task
@@ -174,7 +176,7 @@ def get_ipv6(interface_name='docker0', expand=False):
     :param expand: Expand the abbreviated IP6 address. Default is ``False``.
     :type expand: bool
     """
-    print(SIMPLE_LOG_FORMAT.format(env.host_string, get_ip6_address(interface_name, expand=expand)))
+    puts(get_ip6_address(interface_name, expand=expand))
 
 
 @task

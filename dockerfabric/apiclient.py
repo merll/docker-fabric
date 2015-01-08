@@ -5,9 +5,9 @@ import logging
 import six
 from docker import client as docker
 from fabric.api import env, settings
+from fabric.utils import puts, fastprint
 
 from dockermap.map import base, client, config
-from . import DOCKER_LOG_FORMAT
 from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
@@ -93,7 +93,7 @@ class DockerFabricClient(base.DockerClientWrapper):
         :param info: Log output.
         :type info: unicode
         """
-        print(DOCKER_LOG_FORMAT.format(env.host_string, info))
+        puts(': '.join(('docker', info)))
 
     def push_progress(self, status, object_id, progress):
         """
@@ -107,7 +107,7 @@ class DockerFabricClient(base.DockerClientWrapper):
         :type progress: unicode
         """
         fmt = base.LOG_PROGRESS_FORMAT.format
-        print(fmt(status, object_id, progress))
+        fastprint(fmt(status, object_id, progress))
 
     def close(self):
         """
