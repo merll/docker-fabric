@@ -6,7 +6,7 @@ from dockerfabric.apiclient import docker_fabric
 
 
 @documented_contextmanager
-def temp_container(image, no_op_cmd='/bin/true', create_kwargs={}, start_kwargs={}):
+def temp_container(image, no_op_cmd='/bin/true', create_kwargs=None, start_kwargs=None):
     """
     Creates a temporary container, which can be used e.g. for copying resources. The container is removed once it
     is no longer needed. Note that ``no_op_cmd`` needs to be set appropriately, since the method will wait for the
@@ -24,10 +24,8 @@ def temp_container(image, no_op_cmd='/bin/true', create_kwargs={}, start_kwargs=
     :rtype: unicode
     """
     df = docker_fabric()
-    if create_kwargs:
-        create_kwargs = create_kwargs.copy()
-    if start_kwargs:
-        start_kwargs = start_kwargs.copy()
+    create_kwargs = create_kwargs.copy() if create_kwargs else dict()
+    start_kwargs = start_kwargs.copy() if start_kwargs else dict()
     create_kwargs.update(entrypoint=no_op_cmd)
     start_kwargs.update(restart_policy=None)
     container = df.create_container(image, **create_kwargs)['Id']
