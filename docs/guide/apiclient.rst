@@ -55,6 +55,26 @@ New connections are opened for each combination of Fabric's host string and the 
 the task on multiple machines at once, just as any other Fabric task.
 
 
+Working with multiple clients
+-----------------------------
+Whereas ``docker_fabric()`` always opens the connection on the current host (determined by ``env.host_string``), it may
+be beneficial to run Docker commands without a ``host_string`` or ``roles`` assignment if:
+
+* if the set of clients, that are supposed to run container configurations, does not match the role definitions in
+  Fabric;
+* if you do not feel like creating a separate task with host or role lists for each container configuration to be
+  launched;
+* or the client in some way require different instantiation parameters (e.g. different service URL, tunnel ports, or
+  individual timeout settings);
+
+Docker-Fabric enhances the client configuration from Docker-Map_ in
+:class:`~dockerfabric.apiclient.DockerClientConfiguration`. Setting any of ``base_url``, ``version``, ``timeout``,
+``tunnel_remote_port`` or ``tunnel_local_port`` overrides the global settings from the ``env`` variables mentioned in
+the last section. The object is mapped to Fabric's host configurations by the ``fabric_host`` variable.
+
+If stored as a dictionary in ``env.docker_clients``, configurations are used automatically by ``container_fabric()``.
+
+
 SSH Tunnelling
 --------------
 Docker is by default configured to only accept connections on a Unix socket. This is good practice for security reasons,
@@ -102,6 +122,9 @@ from version 0.2.0, **socat** no longer forks on accepting a connection, this sh
 
 Configuration example
 ---------------------
+
+Single-client configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Consider the following lines in your project's ``fabfile.py``::
 
     env.docker_base_url = '/var/run/docker.sock'
@@ -115,6 +138,30 @@ With this configuration, ``docker_fabric()`` in a task running on each host
    the remote `stdout` and ``/var/run/docker.sock``;
 #. opens a tunnel through the existing SSH connection on port 2224 (increased by 1 for every additional host);
 #. cancels operations that take longer than 20 seconds.
+
+Multi-client configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+In addition to the previous example, adding the following additional lines in your project's ``fabfile.py``::
+
+    env.docker_clients = {
+        'client1': DockerClientConfiguration({
+            'fabric_host': 'host1',
+            'timeout': 40,  # Host needs longer timeouts than usual.
+        }),
+        'client2': DockerClientConfiguration({
+            'fabric_host': 'host2',
+            'interfaces': {
+                'private': '10.x.x.11',  # Host will be publishing some ports.
+                'public': '178.x.x.11',
+            },
+        }),
+    }
+
+A single client can be instantiated using::
+
+    env.docker_clients['client1'].get_client()
+
+Similar to ``docker_fabric()`` each client per host and service URL is only instantiated once.
 
 
 Registry connections

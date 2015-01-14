@@ -13,7 +13,7 @@ Managing containers
 -------------------
 In order to have the map available in your Fabric project, it is practical to store a reference in the global
 ``env`` object. The :ref:`example from Docker-Map <dockermap:container_map_example>` could be initialized with
-reference to other  configuration variables::
+reference to other configuration variables::
 
     env.host_root_path = '/var/lib/site'
     env.registry_prefix = 'registry.example.com'
@@ -23,7 +23,7 @@ reference to other  configuration variables::
     env.app1_data_path = 'data/app1'
     env.app2_data_path = 'data/app2'
 
-    env.container_map = ContainerMap('example_map', {
+    env.docker_maps = ContainerMap('example_map', {
         'repository': env.registry_prefix,
         'host_root': env.host_root_path,
         'web_server': { # Configure container creation and startup
@@ -31,8 +31,9 @@ reference to other  configuration variables::
             'binds': {'web_config': 'ro'},
             'uses': 'app_server_socket',
             'attaches': 'web_log',
-            'start_options': {
-                'port_bindings': {80: 80, 443: 443},
+            'exposes': {
+                80: 80,
+                443: 443,
             },
         },
         'app_server': {
@@ -70,16 +71,21 @@ reference to other  configuration variables::
 In order to use this configuration set, create a :class:`~dockerfabric.apiclient.ContainerFabric` instance from this
 map. For example, in order to launch the web server and all dependencies, run::
 
-    with ContainerFabric(env.container_map) as c:
-        c.create('web_server')
-        c.start('web_server')
+    container_fabric().startup('web_server')
 
-:class:`~dockerfabric.apiclient.ContainerFabric` calls :func:`~dockerfabric.apiclient.docker_fabric`, and therefore
-runs the selected map on each host.
+:class:`~dockerfabric.apiclient.ContainerFabric` (aliased with ``container_fabric()``) calls
+:func:`~dockerfabric.apiclient.docker_fabric` with the host strings on demand, and therefore runs the selected map on
+each host where required.
 
-.. note:: It makes sense to link container maps with Fabric's role definitions. This will soon be implemented
-          in Docker-Fabric. Until then, if you would like to look up roles of the current host, you can use the
-          :func:`~dockerfabric.utils.base.get_current_roles` utility function.
+``env.docker_maps`` can store one container map, or a list / tuple of multiple container maps. You can also store host
+definitions in any variable you like and pass them to ``container_fabric``::
+
+    container_fabric(env.container_maps)
+
+Multi-client configurations are automatically considered when stored in ``env.docker_clients``, but can also be passed
+through a variable::
+
+    container_fabric(maps=custom_maps, clients=custom_clients)
 
 YAML import for container maps
 ------------------------------
@@ -87,16 +93,21 @@ Import of YAML files works identically to :ref:`Docker-Map's implementation <doc
 more added tag: ``!env``. Where applied, the following string is substituted with the current value of a
 corresponding ``env`` variable.
 
-.. note:: It is quite obvious that in this case the order of setting variables is essential. Missing variables lead to
+.. note:: It is quite obvious that in this case the order of setting variables is relevant. Missing variables lead to
           a ``KeyError`` exception.
 
 In order to make use of the ``!env`` tag, import the module from Docker-Fabric instead of Docker-Map::
 
     from dockerfabric import yaml
 
-    env.container_map = yaml.load_map_file('/path/to/example_map.yaml', 'example_map')
+    env.docker_maps = yaml.load_map_file('/path/to/example_map.yaml', 'example_map')
+    env.docker_clients = yaml.load_clients_file('/path/to/example_clients.yaml')
 
-Where the above-quoted map could be represented like this:
+One more difference to the Docker-Map ``yaml`` module is that :func:`load_clients_file` creates object instances of
+:func:`~dockerfabric.apiclient.DockerClientConfiguration`. The latter consider specific settings as the tunnel ports,
+which are not part of Docker-Map.
+
+In the file ``example_map.yaml``, the above-quoted map could be represented like this:
 
 .. code-block:: yaml
 
@@ -107,8 +118,9 @@ Where the above-quoted map could be represented like this:
      binds: {web_config: ro}
      uses: app_server_socket
      attaches: web_log
-     start_options:
-       port_bindings: {80: 80, 443: 443}
+     exposes:
+       80: 80
+       443: 443
    app_server:
      image: app
      instances:
@@ -137,6 +149,52 @@ Where the above-quoted map could be represented like this:
      app_data:
        instance1: !env app1_data_path
        instance2: !env app2_data_path
+
+
+With some modifications, this map could also run a setup on multiple hosts, for example one web server running as
+reverse proxy for multiple identical app servers::
+
+    env.docker_maps.update(
+        web_server={
+            'clients': 'web',
+            'uses': [],  # No longer look for a socket
+        },
+        app_server={
+            'clients': ('apps1', 'apps2', 'apps3'),
+            'attaches': 'app_log',  # No longer create a socket
+            'exposes': [(8443, 8443, 'private')],  # Expose a TCP port on 8443 of the private network interface
+        }
+    )
+
+The modifications could of course have been included in the aforementioned map right away. Moreover, all of this has to
+be set up in the web server's and app servers' configuration accordingly.
+
+A client configuration in ``example_clients.yaml`` could look like this:
+
+.. code-block:: yaml
+
+   web:
+     fabric_host: web_host  # Set the Fabric host here.
+   apps1:
+     fabric_host: app_host1
+     interfaces:
+       private: 10.x.x.21   # Provide the individual IP address for each host.
+   apps2:
+     fabric_host: app_host2
+     interfaces:
+       private: 10.x.x.22
+   apps3:
+     fabric_host: app_host3
+     interfaces:
+       private: 10.x.x.23
+
+
+Since there is no dependency indicated by the configuration between the web and app servers, two startup commands are
+required; still they will connect to each host as necessary::
+
+    with container_fabric() as cf:
+        cf.startup('web_server')
+        cf.startup('app_server')
 
 
 .. _Docker-Map: https://docker-map.readthedocs.org/
