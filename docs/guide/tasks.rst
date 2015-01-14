@@ -80,6 +80,51 @@ In the output of ``list_images``
 * parent image ids are shown,
 * and also here the absolute creation timestamp is printed.
 
+Container tasks
+^^^^^^^^^^^^^^^
+As of version 0.3.0, container maps are recommended to be set in ``env.docker_maps`` (as list or single entry) and
+multiple clients to be configured in ``env.docker_clients``. In that setup, the lifecycle of containers, including their
+dependencies, can be entirely managed from the command line without creating individual tasks for them.
+The module :mod:`~dockerfabric.actions` contains the following actions:
+
+* :func:`~dockerfabric.actions.create` - Creates a container and its dependencies.
+* :func:`~dockerfabric.actions.start` - Starts a container and its dependencies.
+* :func:`~dockerfabric.actions.stop` - Stops a container and its dependents.
+* :func:`~dockerfabric.actions.remove` - Removes a container and its dependents.
+* :func:`~dockerfabric.actions.startup` - Creates and starts a container and its dependencies.
+* :func:`~dockerfabric.actions.shutdown` - Stops and removes a container and its dependents.
+* :func:`~dockerfabric.actions.update` - Updates a container and its dependencies. Creates and starts containers as
+  necessary.
+
+.. note::
+
+   There is also a generic action :func:`~dockerfabric.actions.perform`. Performs an action on the given container map
+   and configuration. There needs to be a matching implementation in the policy class.
+
+Given the lines in ``fabfile.py``::
+
+    from dockerfabric import yaml, actions
+
+    env.docker_maps = yaml.load_map_file('/path/to/example_map.yaml', 'example_map')
+    env.docker_clients = yaml.load_clients_file('/path/to/example_clients.yaml')
+
+
+The web server from the :ref:`yaml-import` example may be started with
+
+.. code-block:: bash
+
+   fab actions.startup:example_map,web_server
+
+runs the web server and its dependencies. The command
+
+.. code-block:: bash
+
+   fab actions.update:example_map,web_server
+
+stops, removes, re-creates, and starts the container if the image as specified in the container configuration (e.g.
+``nginx:latest``) has been updated, or mapped volumes virtual filesystems are found to mismatch the dependency
+containers' shared volumes.
+
 Maintencance tasks
 ^^^^^^^^^^^^^^^^^^
 The maintenance tasks :func:`~dockerfabric.tasks.cleanup_containers`, :func:`~dockerfabric.tasks.cleanup_images`, and

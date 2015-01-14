@@ -58,14 +58,14 @@ the task on multiple machines at once, just as any other Fabric task.
 Working with multiple clients
 -----------------------------
 Whereas ``docker_fabric()`` always opens the connection on the current host (determined by ``env.host_string``), it may
-be beneficial to run Docker commands without a ``host_string`` or ``roles`` assignment if:
+be beneficial to run Docker commands without a ``host_string`` or ``roles`` assignment if
 
-* if the set of clients, that are supposed to run container configurations, does not match the role definitions in
+* the set of clients, that are supposed to run container configurations, does not match the role definitions in
   Fabric;
-* if you do not feel like creating a separate task with host or role lists for each container configuration to be
+* you do not feel like creating a separate task with host or role lists for each container configuration to be
   launched;
 * or the client in some way require different instantiation parameters (e.g. different service URL, tunnel ports, or
-  individual timeout settings);
+  individual timeout settings).
 
 Docker-Fabric enhances the client configuration from Docker-Map_ in
 :class:`~dockerfabric.apiclient.DockerClientConfiguration`. Setting any of ``base_url``, ``version``, ``timeout``,
@@ -114,7 +114,7 @@ Socat options
 ^^^^^^^^^^^^^
 From version 0.2.0, **socat** does not expose a port on the remote end and therefore does not require further
 configuration. For information purposes, the client can however be set to echo the command to `stdout` by setting
-``env.socat_quiet`` to ``True``.
+``env.socat_quiet`` to ``False``.
 
 The utility task ``reset_socat`` removes **socat** processes, in case of occasional re-connection issues. Since
 from version 0.2.0, **socat** no longer forks on accepting a connection, this should no longer occur.

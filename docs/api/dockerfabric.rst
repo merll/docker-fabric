@@ -11,6 +11,14 @@ Subpackages
 Submodules
 ----------
 
+dockerfabric.actions module
+-----------------------------
+
+.. automodule:: dockerfabric.actions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 dockerfabric.apiclient module
 -----------------------------
 

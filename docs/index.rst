@@ -30,6 +30,7 @@ Contents
    guide/utils
    guide/tasks
    guide/containers
+   changes
 
 
 Status

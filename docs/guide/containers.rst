@@ -87,8 +87,10 @@ through a variable::
 
     container_fabric(maps=custom_maps, clients=custom_clients)
 
-YAML import for container maps
-------------------------------
+.. _yaml-import:
+
+YAML import
+-----------
 Import of YAML files works identically to :ref:`Docker-Map's implementation <dockermap:container_yaml>`, but with one
 more added tag: ``!env``. Where applied, the following string is substituted with the current value of a
 corresponding ``env`` variable.
@@ -107,6 +109,8 @@ One more difference to the Docker-Map ``yaml`` module is that :func:`load_client
 :func:`~dockerfabric.apiclient.DockerClientConfiguration`. The latter consider specific settings as the tunnel ports,
 which are not part of Docker-Map.
 
+Container map
+^^^^^^^^^^^^^
 In the file ``example_map.yaml``, the above-quoted map could be represented like this:
 
 .. code-block:: yaml
@@ -151,6 +155,8 @@ In the file ``example_map.yaml``, the above-quoted map could be represented like
        instance2: !env app2_data_path
 
 
+Client configurations
+^^^^^^^^^^^^^^^^^^^^^
 With some modifications, this map could also run a setup on multiple hosts, for example one web server running as
 reverse proxy for multiple identical app servers::
 
@@ -196,5 +202,6 @@ required; still they will connect to each host as necessary::
         cf.startup('web_server')
         cf.startup('app_server')
 
+In addition to creating and starting the containers, ports will be bound to each private network adapter individually.
 
 .. _Docker-Map: https://docker-map.readthedocs.org/
