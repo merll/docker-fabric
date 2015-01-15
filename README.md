@@ -13,17 +13,20 @@ Overview
 ========
 With a few preparations, Docker images can easily be generated and tested on development
 machines, and transferred on to a production environment.  This package is based on
-[Docker-Map](https://github.com/merll/docker-map), and helps to use Docker on
-Fabric-based deployments. Wherever possible, the library makes calls to the Remote API;
-for certain features (e.g. extracting container contents) the Docker command-line
-interface (CLI) is used.
+[Docker-Map](https://github.com/merll/docker-map), and therefore supports managing
+container configurations along with their dependencies within Fabric-based deployments.
+Wherever possible, the library makes calls to the Remote API; for certain features (e.g.
+extracting container contents) the Docker command-line interface (CLI) is used.
 
 API access
 ==========
+As with Docker-Map, container configurations can be generated as objects, updated from
+Python dictionaries, or imported from YAML files in order to control remote clients
+via the API. Docker-Fabric includes the following enhancements:
 
 `DockerFabricClient`
 --------------------
-An implementation of `docker-map`'s `DockerClientWrapper`. Adds Fabric-like logging in
+An implementation of Docker-Map's `DockerClientWrapper`. Adds Fabric-like logging in
 the context of container instances on top of Fabric hosts, and enables automatic
 creation of tunnel connections for access to a remote Docker host using Fabric's SSH
 connection.
@@ -33,9 +36,15 @@ existing SSH tunnel, without re-configuring Docker to enable access by a TCP por
 have already done that, you can still use a local SSH tunnel for avoiding exposing
 Docker outside of `localhost`, as that is not recommended.
 
+`DockerClientConfiguration`
+---------------------------
+Extending `ClientConfiguration`, adds the capability of running containers to Fabric hosts
+with specific Docker settings for each.
+
 `ContainerFabric`
 -----------------
-Simple wrapper for `docker-map`'s `MappingClient` to `DockerFabricClient`.
+Simple wrapper that combines Docker-Map's `DockerFabricClient` and `DockerClientConfiguration`
+objects, and container mmaps.
 
 Command-line based access
 -------------------------
@@ -51,7 +60,11 @@ command line:
 
 Tasks
 =====
-The following tasks are included in this package, that can be run by Fabric directly:
+All essential container actions (`create`, `start`, `stop`, `remove`) and some advanced
+(e.g. `update`) can be triggered from the command line as Fabric tasks.
+
+Additionally the following tasks are included in this package, that can be run by Fabric
+directly:
 
 * `install_docker`: Install Docker on a remote machine (to be adapted to more
   distributions). Uses the latest released version for Ubuntu.

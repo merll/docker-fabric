@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from fabric.api import task
-from fabric.utils import error
 
 from .apiclient import container_fabric
 
