@@ -247,6 +247,13 @@ class DockerFabricClient(base.DockerClientWrapper):
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
         return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure, **kwargs)
 
+    def restart(self, container, **kwargs):
+        """
+        Identical to :meth:`docker.client.Client.restart` with additional logging.
+        """
+        self.push_log("Restarting container '{0}'.".format(container))
+        super(DockerFabricClient, self).restart(container, **kwargs)
+
     def remove_all_containers(self):
         """
         Identical to :meth:`dockermap.map.base.DockerClientWrapper.remove_all_containers` with additional logging.

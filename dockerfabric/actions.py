@@ -73,6 +73,19 @@ def remove(map_name, config_name, instances=None, **kwargs):
 
 
 @task
+def restart(map_name, config_name, instances=None, **kwargs):
+    """
+    Restarts a container and starts its dependencies if necessary.
+
+    :param map_name: Container map name.
+    :param config_name: Container configuration name.
+    :param instances: Optional instance names.
+    :param kwargs: Keyword arguments to the action implementation.
+    """
+    container_fabric().restart(config_name, instances=instances, map_name=map_name, **kwargs)
+
+
+@task
 def startup(map_name, config_name, instances=None, **kwargs):
     """
     Creates and starts a container and its dependencies.
