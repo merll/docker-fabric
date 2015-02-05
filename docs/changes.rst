@@ -3,6 +3,10 @@
 Change History
 ==============
 
+0.3.1
+-----
+* Added restart utility task.
+
 0.3.0
 -----
 * Added Docker-Map's new features (host-client-configuration and multiple maps).
