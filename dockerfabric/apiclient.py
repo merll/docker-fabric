@@ -7,13 +7,14 @@ from docker import client as docker
 from fabric.api import env, settings
 from fabric.utils import puts, fastprint
 
-from dockermap.map import base, client, config
+from dockermap.map.base import LOG_PROGRESS_FORMAT
+from dockermap.api import ClientConfiguration, DockerClientWrapper, MappingDockerClient
 from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
 
 
-progress_fmt = base.LOG_PROGRESS_FORMAT.format
+progress_fmt = LOG_PROGRESS_FORMAT.format
 
 
 def _get_default_config(client_configs):
@@ -48,8 +49,8 @@ class DockerFabricConnections(ConnectionDict):
 docker_fabric = DockerFabricConnections().get_connection
 
 
-class DockerClientConfiguration(config.ClientConfiguration):
-    init_kwargs = config.ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
+class DockerClientConfiguration(ClientConfiguration):
+    init_kwargs = ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
     client_constructor = DockerFabricConnections().get_connection
 
     def get_client(self):
@@ -59,7 +60,7 @@ class DockerClientConfiguration(config.ClientConfiguration):
         return super(DockerClientConfiguration, self).get_client()
 
 
-class DockerFabricClient(base.DockerClientWrapper):
+class DockerFabricClient(DockerClientWrapper):
     """
     Docker client for Fabric.
 
@@ -304,7 +305,7 @@ class DockerFabricClient(base.DockerClientWrapper):
         super(DockerFabricClient, self).wait(container, **kwargs)
 
 
-class ContainerFabric(client.MappingDockerClient):
+class ContainerFabric(MappingDockerClient):
     """
     Convenience class for using a :class:`~dockermap.map.container.ContainerMap` on a :class:`DockerFabricClient`.
 
