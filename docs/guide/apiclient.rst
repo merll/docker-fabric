@@ -198,6 +198,8 @@ a few adaptions are described in the section :ref:`containers`. The process of g
 image from that is however very similar to the description in the
 :ref:`Docker-Map documentation <dockermap:build_images>`::
 
+    from dockermap.api import DockerFile
+
     dockerfile = DockerFile('ubuntu', maintainer='ME, me@example.com')
     ...
     docker_fabric().build_from_file(dockerfile, 'new_image')

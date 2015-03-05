@@ -71,6 +71,8 @@ reference to other configuration variables::
 In order to use this configuration set, create a :class:`~dockerfabric.apiclient.ContainerFabric` instance from this
 map. For example, in order to launch the web server and all dependencies, run::
 
+    from dockerfabric.apiclient import container_fabric
+
     container_fabric().startup('web_server')
 
 :class:`~dockerfabric.apiclient.ContainerFabric` (aliased with ``container_fabric()``) calls
@@ -95,10 +97,16 @@ Import of YAML files works identically to :ref:`Docker-Map's implementation <doc
 more added tag: ``!env``. Where applied, the following string is substituted with the current value of a
 corresponding ``env`` variable.
 
-.. note:: It is quite obvious that in this case the order of setting variables is relevant. Missing variables lead to
-          a ``KeyError`` exception.
+When using the ``!env`` tag, the order of setting variables is relevant, since values are substituted at the time the
+YAML file is read. For cases where this is impractical some configuration elements support a 'lazy' behavior, i.e. they
+are not resolved to their actual values until the first attempt to access them. In order to use that, just apply
+``!env_lazy`` in place of ``!env``. For example volume paths and host ports can be assigned with this tag instead. A
+full list of variables supporting the late value resolution is maintained in the
+:ref:`Docker-Map documentation <dockermap:container_lazy_availability>`.
 
-In order to make use of the ``!env`` tag, import the module from Docker-Fabric instead of Docker-Map::
+.. note:: If the variable is still missing at the time it is needed, a ``KeyError`` exception is raised.
+
+In order to make use of the ``!env`` and ``!env_lazy`` tag, import the module from Docker-Fabric instead of Docker-Map::
 
     from dockerfabric import yaml
 

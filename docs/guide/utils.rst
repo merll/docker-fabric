@@ -96,6 +96,8 @@ other areas of Docker-Fabric, and can also be used directly for deployments.
 For some purposes it may be useful to create a temporary container from an image, copy some data from it, and destroy it
 afterwards. This is provided by :func:`~dockerfabric.utils.containers.temp_container`::
 
+    from dockerfabric.utils.containers import temp_containers
+
     with temp_container('app_image', no_op_cmd='/true'):
         ...
 
@@ -108,6 +110,8 @@ Management of local files, e.g. for copying around container contents, is suppor
 :func:`~dockerfabric.utils.files.temp_dir` creates a temporary directory on the remote host, that is removed after
 leaving the context block. An alias should be assigned for use inside the context block::
 
+    from dockerfabric.utils.files import temp_dir
+
     with temp_dir() as remote_tmp:
         cli.copy_resources('app_container', resources, remote_tmp, dst_directories=temp_mapping, apply_chmod='0750')
         ...
@@ -116,6 +120,8 @@ leaving the context block. An alias should be assigned for use inside the contex
 
 The local counterpart is :func:`~dockerfabric.utils.files.local_temp_dir`: It creates a temporary folder on the client
 side::
+
+    from dockerfabric.utils.files import local_temp_dir
 
     with local_temp_dir() as local_tmp:
         cli.copy_resource('app_container', '/var/log/app', os.path.join(local_tmp, 'app_logs.tar.gz'))
