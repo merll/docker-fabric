@@ -3,6 +3,11 @@
 Change History
 ==============
 
+0.3.2
+-----
+* Added ``!env_lazy`` YAML tag.
+* Fixed bug on local connections.
+
 0.3.1
 -----
 * Added restart utility task.
