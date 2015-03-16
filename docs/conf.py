@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Docker-Fabric'
-copyright = u'2014, Matthias Erll'
+copyright = u'2015, Matthias Erll'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

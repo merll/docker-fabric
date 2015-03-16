@@ -18,7 +18,7 @@ Basic usage
 The constructor of :class:`~dockerfabric.apiclient.DockerFabricClient` accepts the same arguments as the `docker-py`
 implementation (``base_url``, ``version``, and ``timeout``), which are passed through. Moreover, ``tunnel_remote_port``
 and ``tunnel_local_port`` are available. The following arguments of :class:`~dockerfabric.apiclient.DockerFabricClient`
-fall back to Fabric ``env`` variables, it not specified:
+fall back to Fabric ``env`` variables, if not specified explicitly:
 
 * ``base_url``: ``env.docker_base_url``
 * ``version``: ``env.docker_api_version``
@@ -87,28 +87,24 @@ forwarding traffic between the remote tunnel endpoint and that Unix socket. That
 Docker is necessary.
 
 
-Tunnel configuration
+Tunnel functionality
 ^^^^^^^^^^^^^^^^^^^^
-The :class:`~dockerfabric.apiclient.DockerFabricClient` differentiates between the following combinations of
-``base_url`` and ``tunnel_remote_port``:
+Without a host connection in Fabric, the client attempts to make all connection locally (i.e. acts just like the
+`docker-py` client). With a ``host_string`` set, the :class:`~dockerfabric.apiclient.DockerFabricClient` opens a tunnel
+to forward traffic between the local machine and the Docker service on the remote host. Practically, a modified URL
+``tcp://127.0.0.1:<local port>`` is passed to `docker-py`, where ``<local port>`` is the specified via
+``tunnel_local_port``. There are two tunnel methods, depending on the connection type to Docker:
 
-1. If only a client URL or a path to a Unix socket is provided in ``base_url``, and ``tunnel_remote_port`` is ``None``,
-   the connection is not specially handled by Docker-Fabric, but instead passed directly on to the `docker-py`
-   implementation. Connection caching still applies.
-2. For cases that ``tunnel_remote_port`` is set, an additional port is opened on your client. It accepts local
-   connections, for being forwarded through the current SSH connection. This tunnel is used for creating a connection
-   from your end to the Docker remote host.
+#. If ``base_url`` indicates a Unix domain socket, i.e. it is prefixed with any ``http+unix:``, ``unix:``, ``/``, or
+   if it is left empty, **socat** is started on the remote end and forwards traffic between the remote tunnel endpoint
+   and the socket.
+#. In other cases of ``base_url``, the client attempts to connect directly through the established tunnel to the
+   Docker service on the remote end. The service has to be exposed to the port included in the ``base_url`` or set in
+   ``tunnel_remote_port`` or.
 
-   - When ``base_url`` additionally indicates a Unix domain docket, i.e. it is prefixed with any ``http+unix:``,
-     ``unix:``, or ``/``, **socat** is started on the remote end and sends traffic between the remote tunnel endpoint
-     and the socket.
-   - In other cases of ``base_url``, the client attempts to connect directly through the established tunnel to the
-     Docker service on the remote end, which has to be exposed to the local port set in ``tunnel_remote_port``.
-
-It is possible to set the locally opened port with ``tunnel_local_port`` -- by default it is identical with
-``tunnel_remote_port``. As there needs to be a separate local port for every connection,
-:class:`~dockerfabric.apiclient.DockerFabricClient` increases this by one for each additional host. From version 0.1.4,
-this also works with :ref:`parallel tasks in Fabric <fabric:parallel-execution>`.
+As there needs to be a separate local port for every connection, the exact port ``tunnel_local_port`` is only used once
+between multiple clients. :class:`~dockerfabric.apiclient.DockerFabricClient` increases this by one for each additional
+host. From version 0.1.4, this also works with :ref:`parallel tasks in Fabric <fabric:parallel-execution>`.
 
 Socat options
 ^^^^^^^^^^^^^
@@ -117,7 +113,7 @@ configuration. For information purposes, the client can however be set to echo t
 ``env.socat_quiet`` to ``False``.
 
 The utility task ``reset_socat`` removes **socat** processes, in case of occasional re-connection issues. Since
-from version 0.2.0, **socat** no longer forks on accepting a connection, this should no longer occur.
+**socat** no longer forks on accepting a connection, this should no longer occur.
 
 
 Configuration example
@@ -127,15 +123,14 @@ Single-client configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Consider the following lines in your project's ``fabfile.py``::
 
-    env.docker_base_url = '/var/run/docker.sock'
-    env.docker_tunnel_remote_port = 2224
+    env.docker_tunnel_local_port = 2224
     env.docker_timeout = 20
 
 
 With this configuration, ``docker_fabric()`` in a task running on each host
 
 #. opens a channel on the existing SSH connection and launches **socat** on the remote, forwarding traffic between
-   the remote `stdout` and ``/var/run/docker.sock``;
+   the remote `stdout` and ``/var/run/docker.sock`` (the default base URL);
 #. opens a tunnel through the existing SSH connection on port 2224 (increased by 1 for every additional host);
 #. cancels operations that take longer than 20 seconds.
 

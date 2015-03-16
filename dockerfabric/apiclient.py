@@ -14,6 +14,8 @@ from .socat import socat_tunnels
 from .tunnel import local_tunnels
 
 
+DEFAULT_TCP_HOST = 'tcp://127.0.0.1'
+DEFAULT_SOCKET = '/var/run/docker.sock'
 progress_fmt = LOG_PROGRESS_FORMAT.format
 
 
@@ -29,6 +31,51 @@ def _get_default_config(client_configs):
     return None
 
 
+def _get_port_number(expr, port_loc):
+    try:
+        return int(expr)
+    except TypeError:
+        raise ValueError("Missing or invalid {0} port ({1}).".format(port_loc, expr))
+
+
+def _get_socat_tunnel(address, local_port):
+    init_local_port = _get_port_number(local_port, 'local')
+    tunnel_local_port = get_local_port(init_local_port)
+    return (':'.join((DEFAULT_TCP_HOST, six.text_type(tunnel_local_port))),
+            socat_tunnels[(address, tunnel_local_port)])
+
+
+def _get_local_tunnel(address, remote_port, local_port):
+    host_port = address.partition('/')[0]
+    host, __, port = host_port.partition(':')
+    service_remote_port = _get_port_number(port or remote_port, 'remote')
+    init_local_port = _get_port_number(local_port or port or remote_port, 'local')
+    tunnel_local_port = get_local_port(init_local_port)
+    return (':'.join((DEFAULT_TCP_HOST, six.text_type(tunnel_local_port))),
+            local_tunnels[(host, service_remote_port, 'localhost', tunnel_local_port)])
+
+
+def _get_connection_args(base_url, remote_port, local_port):
+    if env.host_string:
+        if base_url:
+            proto_idx = base_url.find(':/')
+            if proto_idx >= 0:
+                proto = base_url[:proto_idx]
+                address = base_url[proto_idx + 2:]
+                if proto in ('http+unix', 'unix'):
+                    if address[:3] == '//':
+                        address = address[1:]
+                    elif address[0] != '/':
+                        address = ''.join(('/', address))
+                    return _get_socat_tunnel(address, local_port)
+                return _get_local_tunnel(address.lstrip('/'), remote_port, local_port)
+            elif base_url[0] == '/':
+                return _get_socat_tunnel(base_url, local_port)
+            return _get_local_tunnel(base_url, remote_port, local_port)
+        return _get_socat_tunnel(DEFAULT_SOCKET, local_port)
+    return base_url, None
+
+
 class DockerFabricConnections(ConnectionDict):
     """
     Cache for connections to the Docker Remote API.
@@ -42,7 +89,7 @@ class DockerFabricConnections(ConnectionDict):
         :param kwargs: Additional keyword args for the client constructor, if a new client has to be instantiated.
         :rtype: DockerFabricClient
         """
-        key = env.get('host_string'), env.get('docker_base_url')
+        key = env.get('host_string'), kwargs.get('base_url', env.get('docker_base_url'))
         return self.get(key, DockerFabricClient, *args, **kwargs)
 
 
@@ -70,7 +117,8 @@ class DockerFabricClient(DockerClientWrapper):
 
     If a unix socket is used, `socat` will be started on the remote side to redirect it to a TCP port.
 
-    :param base_url: URL to connect to; if not set, will try to use ``env.docker_base_url``.
+    :param base_url: URL to connect to; if not set, will refer to ``env.docker_base_url`` or use ``None``, which by
+     default attempts a connection on a Unix socket at ``/var/run/docker.sock``.
     :type base_url: unicode
     :param version: API version; if not set, will try to use ``env.docker_api_version``; otherwise defaults to
      :const:`~docker.client.DEFAULT_DOCKER_API_VERSION`.
@@ -78,35 +126,22 @@ class DockerFabricClient(DockerClientWrapper):
     :param timeout: Client timeout for Docker; if not set, will try to use ``env.docker_timeout``; otherwise defaults to
      :const:`~docker.client.DEFAULT_TIMEOUT_SECONDS`.
     :type timeout: int
-    :param tunnel_remote_port: Optional, for SSH tunneling: Port to open on the remote end for the tunnel; if set to
-     ``None``, will try to use ``env.docker_tunnel_remote_port``; otherwise defaults to ``None`` for no tunnel.
+    :param tunnel_remote_port: Optional, port of the remote service; if port is included in ``base_url``, the latter
+     is preferred. If not set, will try to use ``env.docker_tunnel_remote_port``; otherwise defaults to ``None``.
     :type tunnel_remote_port: int
-    :param tunnel_local_port: Optional, for SSH tunneling: Port to open towards the local end for the tunnel; if set to
-     ``None``, will try to use ``env.docker_tunnel_local_port``; otherwise defaults to the value of ``tunnel_remote_port``.
+    :param tunnel_local_port: Optional, for SSH tunneling: Port to open towards the local end for the tunnel; if not
+     provided, will try to use ``env.docker_tunnel_local_port``; otherwise defaults to the value of
+    ``tunnel_remote_port`` or ``None`` for direct connections without an SSH tunnel.
     :type tunnel_local_port: int
     :param kwargs: Additional kwargs for :class:`docker.client.Client`
     """
     def __init__(self, base_url=None, version=None, timeout=None, tunnel_remote_port=None, tunnel_local_port=None, **kwargs):
-        remote_port = tunnel_remote_port or env.get('docker_tunnel_remote_port')
         url = base_url or env.get('docker_base_url')
         api_version = version or env.get('docker_api_version', docker.DEFAULT_DOCKER_API_VERSION)
         client_timeout = timeout or env.get('docker_timeout', docker.DEFAULT_TIMEOUT_SECONDS)
-        if url is not None and remote_port is not None:
-            p1, __, p2 = url.partition(':')
-            remote_host = p2 or p1
-            if not tunnel_local_port:
-                init_local_port = env.get('docker_tunnel_local_port', remote_port)
-            else:
-                init_local_port = tunnel_local_port
-            local_port = get_local_port(init_local_port)
-            if url.startswith('http+unix:') or url.startswith('unix:') or url.startswith('/'):
-                self._tunnel = socat_tunnels[(remote_host, local_port)]
-            else:
-                self._tunnel = local_tunnels[(remote_host, remote_port, 'localhost', local_port)]
-            conn_url = ':'.join(('tcp://127.0.0.1', six.text_type(local_port)))
-        else:
-            self._tunnel = None
-            conn_url = url
+        remote_port = tunnel_remote_port or env.get('docker_tunnel_remote_port')
+        local_port = tunnel_local_port or env.get('docker_tunnel_local_port', remote_port)
+        conn_url, self._tunnel = _get_connection_args(url, remote_port, local_port)
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout, **kwargs)
 
     def push_log(self, info, level=logging.INFO):

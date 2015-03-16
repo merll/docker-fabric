@@ -6,7 +6,7 @@ Getting started
 In order to connect with the Docker service, make sure that
 
 1. Docker is installed on the remote machine;
-2. **socat** is installed, if you are using the SSH tunnel;
+2. **socat** is installed and in the remote's search path, if you are using the SSH tunnel;
 3. and the SSH user has access to the service.
 
 (For details, refer to :ref:`installation_and_configuration`).
@@ -16,7 +16,7 @@ Calls to the Remote API can be made by using :func:`~dockerfabric.apiclient.dock
 usual SSH connection (creates a new one if necessary) and opens a separate channel for forwarding requests to the
 Docker Remote API.
 
-Since this is merely a wrapper, all commands to ``docker-py`` are supported. Some additional functionality is provided
+Since this is merely a wrapper, all commands to `docker-py` are supported. Some additional functionality is provided
 by Docker-Map. However, instead of repeatedly passing in similar parameters (e.g. the service URL), settings can be
 preset globally for the project. Additionally, it provides a caching functionality for open tunnels and connections,
 which speeds up access to Docker significantly.

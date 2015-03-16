@@ -25,22 +25,23 @@ The following libraries will be automatically installed from PyPI:
 
 * Fabric (tested with >=1.8.0)
 * docker-py (>=0.5.0)
-* docker-map (>=0.1.2)
+* docker-map (>=0.3.0)
 * Optional: PyYAML (tested with 3.11) for YAML configuration import
 
 
 Docker service
 ^^^^^^^^^^^^^^
 Docker needs to be installed on the target machine. On Ubuntu, you can use the task `install_docker` for automatically
-installing and configuring the latest release. The following configuration is only needed if the service has been
+installing and configuring the latest release. Additional configuration is only needed if the service has been
 installed otherwise.
 
 
 Socat
 ^^^^^
-The tool Socat_ is needed in order to tunnel local TCP-IP connections to a unix socket on the target machine. You can
-either install it yourself and transfer the binary using the Fabric task `install_socat`, or use the task `build_socat`
-(currently only Ubuntu) to build it directly on your target machine.
+The tool Socat_ is needed in order to tunnel local TCP-IP connections to a unix socket on the target machine. The
+``socat`` binary needs to be in the search path. You can either install it yourself and transfer the binary using the
+Fabric task `install_socat`, or use the task `build_socat` (currently only Ubuntu) to build it directly on your target
+machine.
 
 
 Configuration
@@ -75,24 +76,32 @@ you might want to assign an alias for the task namespace::
 
 Environment
 ^^^^^^^^^^^
-In order to customize the general behavior of the client, the following variables can be set in `Fabric's env`_:
+In order to customize the general behavior of the client, the following variables can be set in `Fabric's env`_. All
+of them are generally optional, but some are needed when tunnelling connections over SSH:
 
-* ``docker_tunnel_remote_port``: Optional; to be set if the existing SSH connection will be used for tunnelling a local
-  connection to the Docker Remote API. If a TCP connection is tunneled, this port should be the endpoint of the remote
-  API (e.g. 443 if Docker is exposing a local HTTPS service); for unix connections, this will be used by **socat** to
-  forward traffic between the SSH tunnel and the Docker socket.
-* ``docker_base_url``: Optional, but to be set if the local connection is not on the local machine. If
-  ``docker_tunnel_remote_port`` is set, will be tunnelled through SSH, otherwise be simply passed to ``docker-py``. When
-  tunneling an URL starting with ``http+unix:``, ``unix:``, or ``/`` (indicating a file path), **socat** will be used to
-  bridge the TCP-IP connection to the socket. For example, set it to ``/var/run/docker.sock`` if Docker is running on the
-  same machine that you are connecting to.
-* ``docker_tunnel_local_port``: Optional; set this, if you are using a tunneled socket connection and for some reason
-  want the local tunnel to have a different open port than the one on the remote end.
-  Since a local port has to be available for each connection, the port is increased by one for each connection in order
-  to handle multiple server connections. This means for example, that when setting this to 2224 and connecting to 10
-  servers, ports from 2224 through 2233 will be temporarily occupied.
-* ``docker_timeout``: Optional; by default uses :const:`~docker-py.docker.client.DEFAULT_TIMEOUT_SECONDS`.
-* ``docker_api_version``: Optional; by default uses :const:`~docker-py.docker.client.DEFAULT_DOCKER_API_VERSION`.
+* ``docker_base_url``: The URL of the Docker service. If not set, defaults to a socket connection in
+  ``/var/run/docker.sock``, which is also the default behavior of the `docker-py` client.
+  If ``docker_tunnel_remote_port`` and/or ``docker_tunnel_local_port`` is set, the connection will be tunnelled through
+  SSH, otherwise the value is simply passed to `docker-py`. For socket connections (i.e. this is blank, starts with
+  a forward slash, or is prefixed with ``http+unix:``, ``unix:``), **socat** will be used to forward the TCP-IP tunnel
+  to the socket.
+* ``docker_tunnel_local_port``: Set this, if you need a tunneled socket connection. Alternatively, the value
+  ``docker_tunnel_remote_port`` is used (unless empty as well). This is the first local port for tunnelling
+  connections to a Docker service on the remote. Since during simultaneous connections, a separate local port has to be
+  available for each, the port number is increased by one on every new connection. This means for example, that when
+  setting this to 2224 and connecting to 10 servers, ports from 2224 through 2233 will be temporarily occupied.
+* ``docker_tunnel_remote_port``: Port of the Docker service.
+
+  - On TCP connections, this is the remote endpoint of the tunnel. If a different port is included in
+    ``docker_base_url``, this setting is ignored.
+  - For socket connections, this is the initial local tunnel port. If specified by ``docker_tunnel_local_port``, this
+    setting has no effect.
+
+* ``docker_timeout``: Request timeout of the Docker service; by default uses
+  :const:`~docker-py.docker.client.DEFAULT_TIMEOUT_SECONDS`.
+* ``docker_api_version``: API version used to communicate with the Docker service, as a string, such as ``1.16``.
+  Must be lower or equal to the accepted version. By default uses
+  :const:`~docker-py.docker.client.DEFAULT_DOCKER_API_VERSION`.
 
 
 Additionally, the following variables are specific for Docker registry access. They can be overridden in the relevant
@@ -107,6 +116,26 @@ commands (:meth:`~dockerfabric.apiclient.DockerFabricClient.login`,
   If not set, registry operations will run on the public Docker index.
 * ``docker_registry_insecure``: Whether to set the `insecure` flag on Docker registry operations, e.g. when accessing your
   self-hosted registry over plain HTTP. Default is ``False``.
+
+
+Examples
+^^^^^^^^
+For connecting to a remote Docker instance over a socket, install **socat** on the remote, and put the following in
+your ``fabfile``::
+
+    from fabric.api import env
+    from dockerfabric import tasks as docker
+
+    env.docker_tunnel_local_port = 22024  # or any other available port above 1024 of your choice
+
+
+If the remote Docker instance accepts connections on port 8000 from localhost (not recommended), use the following::
+
+    from fabric.api import env
+    from dockerfabric import tasks as docker
+
+    env.docker_base_url = 'tcp://127.0.0.1:8000'
+    env.docker_tunnel_local_port = 22024  # or any other available port above 1024 of your choice
 
 
 Checking the setup
