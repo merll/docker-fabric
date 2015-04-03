@@ -3,6 +3,10 @@
 Change History
 ==============
 
+0.3.3
+-----
+* More consistent arguments to connection behavior.
+
 0.3.2
 -----
 * Added ``!env_lazy`` YAML tag.
