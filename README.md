@@ -24,27 +24,27 @@ As with Docker-Map, container configurations can be generated as objects, update
 Python dictionaries, or imported from YAML files in order to control remote clients
 via the API. Docker-Fabric includes the following enhancements:
 
-`DockerFabricClient`
---------------------
-An implementation of Docker-Map's `DockerClientWrapper`. Adds Fabric-like logging in
-the context of container instances on top of Fabric hosts, and enables automatic
-creation of tunnel connections for access to a remote Docker host using Fabric's SSH
-connection.
+Docker client
+-------------
+`DockerFabricClient` is an implementation of Docker-Map's `DockerClientWrapper`. It
+adds Fabric-like logging in the context of container instances on top of Fabric hosts,
+and enables automatic creation of tunnel connections for access to a remote Docker host
+using Fabric's SSH connection.
 
 By using the tool `socat`, a Docker client can be used on a remote machine through an
 existing SSH tunnel, without re-configuring Docker to enable access by a TCP port. If you
 have already done that, you can still use a local SSH tunnel for avoiding exposing
 Docker outside of `localhost`, as that is not recommended.
 
-`DockerClientConfiguration`
----------------------------
-Extending `ClientConfiguration`, adds the capability of running containers to Fabric hosts
-with specific Docker settings for each.
+Client configuration
+--------------------
+`DockerClientConfiguration` is extending `ClientConfiguration`, and adds the capability
+of running containers to Fabric hosts with specific Docker settings for each.
 
-`ContainerFabric`
------------------
-Simple wrapper that combines Docker-Map's `DockerFabricClient` and `DockerClientConfiguration`
-objects, and container mmaps.
+Running container configurations
+--------------------------------
+`ContainerFabric` is a simple wrapper that combines Docker-Map's `DockerFabricClient`,
+`DockerClientConfiguration` objects, and container mmaps.
 
 Command-line based access
 -------------------------
