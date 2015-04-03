@@ -131,7 +131,7 @@ class DockerFabricClient(DockerClientWrapper):
     :type tunnel_remote_port: int
     :param tunnel_local_port: Optional, for SSH tunneling: Port to open towards the local end for the tunnel; if not
      provided, will try to use ``env.docker_tunnel_local_port``; otherwise defaults to the value of
-    ``tunnel_remote_port`` or ``None`` for direct connections without an SSH tunnel.
+     ``tunnel_remote_port`` or ``None`` for direct connections without an SSH tunnel.
     :type tunnel_local_port: int
     :param kwargs: Additional kwargs for :class:`docker.client.Client`
     """
