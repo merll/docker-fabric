@@ -5,9 +5,9 @@ import logging
 import six
 from docker import client as docker
 from fabric.api import env, settings
-from fabric.utils import puts, fastprint
+from fabric.utils import puts, fastprint, error
 
-from dockermap.map.base import LOG_PROGRESS_FORMAT
+from dockermap.map.base import LOG_PROGRESS_FORMAT, DockerStatusError
 from dockermap.api import ClientConfiguration, DockerClientWrapper, MappingDockerClient
 from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
@@ -151,7 +151,7 @@ class DockerFabricClient(DockerClientWrapper):
         :param info: Log output.
         :type info: unicode
         """
-        puts(': '.join(('docker', info)))
+        puts('docker: {0}'.format(info))
 
     def push_progress(self, status, object_id, progress):
         """
@@ -180,8 +180,12 @@ class DockerFabricClient(DockerClientWrapper):
         """
         Identical to :meth:`dockermap.map.base.DockerClientWrapper.build` with additional logging.
         """
+        kwargs['raise_on_error'] = True
         self.push_log("Building image '{0}'.".format(tag))
-        return super(DockerFabricClient, self).build(tag, **kwargs)
+        try:
+            return super(DockerFabricClient, self).build(tag, **kwargs)
+        except DockerStatusError as e:
+            error(e.message)
 
     def create_container(self, image, name=None, **kwargs):
         """
@@ -269,8 +273,12 @@ class DockerFabricClient(DockerClientWrapper):
           ``env.docker_registry_insecure``.
         """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream, insecure_registry=c_insecure,
-                                                    **kwargs)
+        kwargs['raise_on_error'] = True
+        try:
+            return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream,
+                                                        insecure_registry=c_insecure, **kwargs)
+        except DockerStatusError as e:
+            error(e.message)
 
     def push(self, repository, stream=True, **kwargs):
         """
@@ -281,7 +289,12 @@ class DockerFabricClient(DockerClientWrapper):
           ``env.docker_registry_insecure``.
         """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure, **kwargs)
+        kwargs['raise_on_error'] = True
+        try:
+            return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure,
+                                                        **kwargs)
+        except DockerStatusError as e:
+            error(e.message)
 
     def restart(self, container, **kwargs):
         """
