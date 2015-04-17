@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 import logging
-import six
 from docker import client as docker
 from fabric.api import env, settings
 from fabric.utils import puts, fastprint, error
@@ -41,8 +40,8 @@ def _get_port_number(expr, port_loc):
 def _get_socat_tunnel(address, local_port):
     init_local_port = _get_port_number(local_port, 'local')
     tunnel_local_port = get_local_port(init_local_port)
-    return (':'.join((DEFAULT_TCP_HOST, six.text_type(tunnel_local_port))),
-            socat_tunnels[(address, tunnel_local_port)])
+    socat_tunnel = socat_tunnels[(address, tunnel_local_port)]
+    return '{0}:{1}'.format(DEFAULT_TCP_HOST, socat_tunnel.bind_port), socat_tunnel
 
 
 def _get_local_tunnel(address, remote_port, local_port):
@@ -50,9 +49,8 @@ def _get_local_tunnel(address, remote_port, local_port):
     host, __, port = host_port.partition(':')
     service_remote_port = _get_port_number(port or remote_port, 'remote')
     init_local_port = _get_port_number(local_port or port or remote_port, 'local')
-    tunnel_local_port = get_local_port(init_local_port)
-    return (':'.join((DEFAULT_TCP_HOST, six.text_type(tunnel_local_port))),
-            local_tunnels[(host, service_remote_port, 'localhost', tunnel_local_port)])
+    local_tunnel = local_tunnels[(host, service_remote_port, 'localhost', init_local_port)]
+    return '{0}:{1}'.format(DEFAULT_TCP_HOST, local_tunnel.bind_port), local_tunnel
 
 
 def _get_connection_args(base_url, remote_port, local_port):

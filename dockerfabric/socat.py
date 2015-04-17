@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from fabric.state import env
 from fabric.utils import puts
 
-from .base import ConnectionDict
+from .base import ConnectionDict, get_local_port
 from .tunnel import LocalTunnel
 
 
@@ -22,12 +22,15 @@ class SocketTunnels(ConnectionDict):
         :return: Socket tunnel
         :rtype: SocketTunnel
         """
-        remote_socket, local_port = item
+        def _connect_socket_tunnel():
+            local_port = get_local_port(init_local_port)
+            svc = SocketTunnel(remote_socket, local_port, env.get('socat_quiet', True))
+            svc.connect()
+            return svc
+
+        remote_socket, init_local_port = item
         key = env.host_string, remote_socket
-        svc = self.get(key, lambda: SocketTunnel(remote_socket, local_port,
-                                                 env.get('socat_quiet', True)))
-        svc.connect()
-        return svc
+        return self.get(key, _connect_socket_tunnel)
 
 
 socat_tunnels = SocketTunnels()

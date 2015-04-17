@@ -9,7 +9,7 @@ from fabric.network import needs_host
 from fabric.state import connections, env
 from fabric.thread_handling import ThreadHandler
 
-from .base import ConnectionDict
+from .base import ConnectionDict, get_local_port
 
 
 class LocalTunnels(ConnectionDict):
@@ -23,11 +23,15 @@ class LocalTunnels(ConnectionDict):
         :return: Local tunnel
         :rtype: LocalTunnel
         """
-        remote_host, remote_port, bind_host, bind_port = item
+        def _connect_local_tunnel():
+            bind_port = get_local_port(init_bind_port)
+            tun = LocalTunnel(remote_port, remote_host, bind_port, bind_host)
+            tun.connect()
+            return tun
+
+        remote_host, remote_port, bind_host, init_bind_port = item
         key = remote_host, remote_port
-        tun = self.get(key, lambda: LocalTunnel(remote_port, remote_host, bind_port, bind_host))
-        tun.connect()
-        return tun
+        return self.get(key, _connect_local_tunnel)
 
 
 local_tunnels = LocalTunnels()
