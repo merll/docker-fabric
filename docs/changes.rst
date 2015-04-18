@@ -3,6 +3,11 @@
 Change History
 ==============
 
+0.3.4
+-----
+* Added Fabric error handling when build fails.
+* Fixed re-use of existing local tunnels when connections are opened through different methods.
+
 0.3.3
 -----
 * More consistent arguments to connection behavior.

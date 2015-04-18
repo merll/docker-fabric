@@ -25,7 +25,7 @@ The following libraries will be automatically installed from PyPI:
 
 * Fabric (tested with >=1.8.0)
 * docker-py (>=0.5.0)
-* docker-map (>=0.3.0)
+* docker-map (>=0.3.2)
 * Optional: PyYAML (tested with 3.11) for YAML configuration import
 
 
