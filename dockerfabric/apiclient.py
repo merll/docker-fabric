@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 import logging
-from docker import client as docker
 from fabric.api import env, settings
 from fabric.utils import puts, fastprint, error
 
@@ -133,14 +132,16 @@ class DockerFabricClient(DockerClientWrapper):
     :type tunnel_local_port: int
     :param kwargs: Additional kwargs for :class:`docker.client.Client`
     """
-    def __init__(self, base_url=None, version=None, timeout=None, tunnel_remote_port=None, tunnel_local_port=None, **kwargs):
+    def __init__(self, base_url=None, version=None, timeout=None, tunnel_remote_port=None, tunnel_local_port=None,
+                 **kwargs):
         url = base_url or env.get('docker_base_url')
-        api_version = version or env.get('docker_api_version', docker.DEFAULT_DOCKER_API_VERSION)
-        client_timeout = timeout or env.get('docker_timeout', docker.DEFAULT_TIMEOUT_SECONDS)
+        api_version = version or env.get('docker_api_version')
+        client_timeout = timeout or env.get('docker_timeout')
         remote_port = tunnel_remote_port or env.get('docker_tunnel_remote_port')
         local_port = tunnel_local_port or env.get('docker_tunnel_local_port', remote_port)
         conn_url, self._tunnel = _get_connection_args(url, remote_port, local_port)
-        super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout, **kwargs)
+        super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout,
+                                                 **kwargs)
 
     def push_log(self, info, level=logging.INFO):
         """
