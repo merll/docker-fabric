@@ -3,6 +3,10 @@
 Change History
 ==============
 
+0.3.5
+-----
+* docker-py update compatibility.
+
 0.3.4
 -----
 * Added Fabric error handling when build fails.
