@@ -28,7 +28,7 @@ reference to other configuration variables::
         'host_root': env.host_root_path,
         'web_server': { # Configure container creation and startup
             'image': 'nginx',
-            'binds': {'web_config': 'ro'},
+            'binds': {'/etc/nginx': ('env.nginx_config_path', 'ro')},
             'uses': 'app_server_socket',
             'attaches': 'web_log',
             'exposes': {
@@ -48,7 +48,6 @@ reference to other configuration variables::
             'permissions': 'u=rwX,g=rX,o=',
         },
         'volumes': { # Configure volume paths inside containers
-            'web_config': '/etc/nginx',
             'web_log': '/var/log/nginx',
             'app_server_socket': '/var/lib/app/socket',
             'app_config': '/var/lib/app/config',
@@ -56,7 +55,6 @@ reference to other configuration variables::
             'app_data': '/var/lib/app/data',
         },
         'host': { # Configure volume paths on the Docker host
-            'web_config': env.nginx_config_path,
             'app_config': {
                 'instance1': env.app1_config_path,
                 'instance2': env.app2_config_path,
@@ -127,7 +125,10 @@ In the file ``example_map.yaml``, the above-quoted map could be represented like
    host_root: /var/lib/site
    web_server:
      image: nginx
-     binds: {web_config: ro}
+     binds:
+       /etc/nginx:
+       - !env nginx_config_path
+       - ro
      uses: app_server_socket
      attaches: web_log
      exposes:
@@ -147,14 +148,12 @@ In the file ``example_map.yaml``, the above-quoted map could be represented like
      user: 2000
      permissions: u=rwX,g=rX,o=
    volumes:
-     web_config: /etc/nginx
      web_log: /var/log/nginx
      app_server_socket: /var/lib/app/socket
      app_config: /var/lib/app/config
      app_log: /var/lib/app/log
      app_data: /var/lib/app/data
    host:
-     web_config: !env nginx_config_path
      app_config:
        instance1: !env app1_config_path
        instance2: !env app2_config_path

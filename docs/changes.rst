@@ -3,6 +3,10 @@
 Change History
 ==============
 
+0.3.6
+-----
+* Added script and single-command actions.
+
 0.3.5
 -----
 * docker-py update compatibility.

@@ -1,8 +1,8 @@
 Docker-Fabric
 =============
 
-Integration of Docker deployments into Fabric.
-----------------------------------------------
+Build Docker images, and run Docker containers in Fabric.
+---------------------------------------------------------
 
 Project: https://github.com/merll/docker-fabric
 
@@ -12,43 +12,42 @@ Docs: https://docker-fabric.readthedocs.org/en/latest/
 Overview
 ========
 With a few preparations, Docker images can easily be generated and tested on development
-machines, and transferred on to a production environment.  This package is based on
-[Docker-Map](https://github.com/merll/docker-map), and therefore supports managing
+machines, and transferred on to a production environment. This package supports managing
 container configurations along with their dependencies within Fabric-based deployments.
-Wherever possible, the library makes calls to the Remote API; for certain features (e.g.
-extracting container contents) the Docker command-line interface (CLI) is used.
+DockerFiles can also be easily implemented in Fabric tasks.
+
+Local Docker clients can be controlled directly through ``docker-py``. Remote Docker
+API services make use of Fabric's SSH connection.
 
 API access
 ==========
+This project is based on [Docker-Map](https://github.com/merll/docker-map), and adapts
+its container configuration methods.
+
 As with Docker-Map, container configurations can be generated as objects, updated from
 Python dictionaries, or imported from YAML files in order to control remote clients
 via the API. Docker-Fabric includes the following enhancements:
 
 Docker client
 -------------
-`DockerFabricClient` is an implementation of Docker-Map's `DockerClientWrapper`. It
-adds Fabric-like logging in the context of container instances on top of Fabric hosts,
-and enables automatic creation of tunnel connections for access to a remote Docker host
-using Fabric's SSH connection.
-
-By using the tool `socat`, a Docker client can be used on a remote machine through an
-existing SSH tunnel, without re-configuring Docker to enable access by a TCP port. If you
-have already done that, you can still use a local SSH tunnel for avoiding exposing
-Docker outside of `localhost`, as that is not recommended.
+`DockerFabricClient` adds Fabric-like logging in the context of container instances on
+top of Fabric hosts, and enables automatic creation of tunnel connections for access to a
+remote Docker host using Fabric's SSH connection. By using the tool `socat`, the Docker
+client can access a remote service without re-configuration.
 
 Client configuration
 --------------------
-`DockerClientConfiguration` is extending `ClientConfiguration`, and adds the capability
-of running containers to Fabric hosts with specific Docker settings for each.
+`DockerClientConfiguration` adds the capability of running containers to Fabric hosts
+with specific Docker settings for each, e.g. the version number.
 
 Running container configurations
 --------------------------------
 `ContainerFabric` is a simple wrapper that combines Docker-Map's `DockerFabricClient`,
-`DockerClientConfiguration` objects, and container mmaps.
+`DockerClientConfiguration` objects, and container maps.
 
 Command-line based access
 -------------------------
-Provides the following features by running the appropriate commands on a remote Docker
+The following features are provided by running the appropriate commands on a remote Docker
 command line:
 
 * Copy resources from a container to a Fabric host.
@@ -61,7 +60,8 @@ command line:
 Tasks
 =====
 All essential container actions (`create`, `start`, `stop`, `remove`) and some advanced
-(e.g. `update`) can be triggered from the command line as Fabric tasks.
+(e.g. `update`) can be triggered from the command line as Fabric tasks and executed on
+the remote service, e.g. via SSH.
 
 Additionally the following tasks are included in this package, that can be run by Fabric
 directly:

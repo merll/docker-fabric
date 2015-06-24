@@ -95,6 +95,11 @@ The module :mod:`~dockerfabric.actions` contains the following actions:
 * :func:`~dockerfabric.actions.shutdown` - Stops and removes a container and its dependents.
 * :func:`~dockerfabric.actions.update` - Updates a container and its dependencies. Creates and starts containers as
   necessary.
+* :func:`~dockerfabric.actions.script` - Uploads and runs a script inside a container, which is created specifically
+  for that purpose, along with its dependencies. The container is removed after the script has completed.
+* :func:`~dockerfabric.actions.single_cmd` - Similar to :func:`~dockerfabric.actions.script`, but not uploading
+  contents beforehand, for running a self-contained command (e.g. Django `migrate`, Redis `flusdhdb` etc.). If this
+  produces files, the results can be downloaded however.
 
 .. note::
 
