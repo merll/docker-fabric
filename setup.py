@@ -22,7 +22,7 @@ setup(
     name='docker-fabric',
     version=__version__,
     packages=find_packages(),
-    install_requires=['six', 'Fabric>=1.8.0', 'docker-py>=0.5.0', 'docker-map>=0.3.2'],
+    install_requires=['six', 'Fabric>=1.8.0', 'docker-py>=0.5.0', 'docker-map>=0.4.1'],
     extras_require={
         'yaml': ['PyYAML'],
     },
@@ -30,7 +30,7 @@ setup(
     author='Matthias Erll',
     author_email='matthias@erll.de',
     url='https://github.com/merll/docker-fabric',
-    description='Integration of Docker deployments into Fabric.',
+    description='Build Docker images, and run Docker containers in Fabric.',
     long_description=include_readme(),
     platforms=['OS Independent'],
     keywords=['docker', 'fabric'],
