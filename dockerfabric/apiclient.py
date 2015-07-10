@@ -143,14 +143,18 @@ class DockerFabricClient(DockerClientWrapper):
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout,
                                                  **kwargs)
 
-    def push_log(self, info, level=logging.INFO):
+    def push_log(self, info, level=logging.INFO, *args, **kwargs):
         """
         Prints the log as usual for fabric output, enhanced with the prefix "docker".
 
         :param info: Log output.
         :type info: unicode
         """
-        puts('docker: {0}'.format(info))
+        if args:
+            msg = info % args
+        else:
+            msg = info
+        puts('docker: {0}'.format(msg))
 
     def push_progress(self, status, object_id, progress):
         """
