@@ -272,7 +272,8 @@ class DockerFabricClient(DockerClientWrapper):
           ``env.docker_registry_insecure``.
         """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        kwargs['raise_on_error'] = True
+        if 'raise_on_error' not in kwargs:
+            kwargs['raise_on_error'] = True
         try:
             return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream,
                                                         insecure_registry=c_insecure, **kwargs)
