@@ -3,6 +3,11 @@
 Change History
 ==============
 
+0.3.7
+-----
+* Minor logging changes.
+* Make it possible to set raise_on_error with pull (`PR #3 <https://github.com/merll/docker-fabric/pull/3>`_)
+
 0.3.6
 -----
 * Added script and single-command actions.
