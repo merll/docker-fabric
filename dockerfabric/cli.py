@@ -7,7 +7,7 @@ import posixpath
 from fabric.api import cd, get, run, sudo
 from fabric.network import needs_host
 
-from dockermap.shortcuts import chmod, chown, targz
+from dockermap.shortcuts import chmod, chown, targz, mkdir
 from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
 
@@ -46,7 +46,7 @@ def copy_resource(container, resource, local_filename, contents_only=True):
 
 
 @needs_host
-def copy_resources(src_container, src_resources, storage_dir, dst_directories={}, apply_chown=None, apply_chmod=None):
+def copy_resources(src_container, src_resources, storage_dir, dst_directories=None, apply_chown=None, apply_chmod=None):
     """
     Copies files and directories from a Docker container. Multiple resources can be copied and additional options are
     available than in :func:`copy_resource`. Unlike in :func:`copy_resource`, Resources are copied as they are and not
@@ -71,12 +71,14 @@ def copy_resources(src_container, src_resources, storage_dir, dst_directories={}
     """
     def _copy_resource(resource):
         default_dest_path = generic_path if generic_path is not None else resource
-        dest_path = dst_directories.get(resource, default_dest_path).strip(posixpath.sep)
+        dest_path = directories.get(resource, default_dest_path).strip(posixpath.sep)
         head, tail = posixpath.split(dest_path)
         rel_path = posixpath.join(storage_dir, head)
+        run(mkdir(rel_path, check_if_exists=True))
         run('docker cp {0}:{1} {2}'.format(src_container, resource, rel_path), shell=False)
 
-    generic_path = dst_directories.get('*')
+    directories = dst_directories or {}
+    generic_path = directories.get('*')
     for res in src_resources:
         _copy_resource(res)
     if apply_chmod:
