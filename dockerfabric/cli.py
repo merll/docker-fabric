@@ -30,6 +30,7 @@ def copy_resource(container, resource, local_filename, contents_only=True):
     with temp_dir() as remote_tmp:
         base_name = os.path.basename(resource)
         copy_path = posixpath.join(remote_tmp, 'copy_tmp')
+        run(mkdir(copy_path, check_if_exists=True))
         remote_name = posixpath.join(copy_path, base_name)
         archive_name = 'container_{0}.tar.gz'.format(container)
         archive_path = posixpath.join(remote_tmp, archive_name)
