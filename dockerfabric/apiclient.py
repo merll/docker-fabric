@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 import logging
-from fabric.api import env, settings
+from fabric.api import env, settings, sudo
 from fabric.utils import puts, fastprint, error
 
 from dockermap.map.base import LOG_PROGRESS_FORMAT, DockerStatusError
@@ -355,6 +355,9 @@ class DockerFabricClient(DockerClientWrapper):
         """
         self.push_log("Waiting for container '{0}'.".format(container))
         super(DockerFabricClient, self).wait(container, **kwargs)
+
+    def run_cmd(self, command):
+        sudo(command)
 
 
 class ContainerFabric(MappingDockerClient):
