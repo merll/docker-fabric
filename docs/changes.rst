@@ -3,6 +3,11 @@
 Change History
 ==============
 
+0.3.8
+-----
+* Implemented local (faster) method for adjusting permissions on containers.
+* Fixed issues with non-existing directories when downloading resources from containers.
+
 0.3.7
 -----
 * Minor logging changes.
