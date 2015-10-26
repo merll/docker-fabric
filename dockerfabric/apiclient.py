@@ -399,6 +399,8 @@ class ContainerFabric(MappingDockerClient):
                         raise ValueError("Client '{0}' is configured, but has no 'fabric_host' definition.".format(map_client))
                     current_clients[map_client] = client_config
 
+        if not (default_client or clients):
+            default_client = self.configuration_class()
         super(ContainerFabric, self).__init__(container_maps=all_maps, docker_client=default_client,
                                               clients=current_clients, **kwargs)
 
