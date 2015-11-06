@@ -3,6 +3,10 @@
 Change History
 ==============
 
+0.3.9
+-----
+* Client configuration is not required, if defaults are used.
+
 0.3.8
 -----
 * Implemented local (faster) method for adjusting permissions on containers.
