@@ -204,8 +204,8 @@ def list_containers(list_all=True, short_image=True, full_ids=False, full_cmd=Fa
     :type short_image: bool
     :param full_ids: Shows the full image ids. When ``False`` (default) only shows the first 12 characters.
     :type full_ids: bool
-    :param full_ids: Shows the full container command. When ``False`` (default) only shows the first 25 characters.
-    :type full_ids: bool
+    :param full_cmd: Shows the full container command. When ``False`` (default) only shows the first 25 characters.
+    :type full_cmd: bool
     """
     containers = docker_fabric().containers(all=list_all)
     _format_output_table(containers, CONTAINER_COLUMNS, full_ids, full_cmd, short_image)
