@@ -154,7 +154,10 @@ class DockerFabricClient(DockerClientWrapper):
             msg = info % args
         else:
             msg = info
-        puts('docker: {0}'.format(msg))
+        try:
+            puts('docker: {0}'.format(msg))
+        except UnicodeDecodeError:
+            puts('docker: -- non-printable output --')
 
     def push_progress(self, status, object_id, progress):
         """
