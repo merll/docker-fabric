@@ -12,22 +12,26 @@ each task is displayed when running ``fab --list`` -- the following sections des
 
 Setup tasks
 -----------
-Tasks :func:`~dockerfabric.tasks.install_docker`, :func:`~dockerfabric.tasks.build_socat`, and
+Tasks :func:`~dockerfabric.tasks.install_docker_ubuntu`, :func:`~dockerfabric.tasks.build_socat_ubuntu`,
+:func:`~dockerfabric.tasks.install_docker_centos`, :func:`~dockerfabric.tasks.build_socat_centos`, and
 :func:`~dockerfabric.tasks.fetch_socat`, and :func:`~dockerfabric.tasks.install_socat` are helpers for setting up
 new hosts for Fabric with Docker.
 
-* If not already installed, :func:`~dockerfabric.tasks.install_docker` installs the most recent release of Docker
+* If not already installed, :func:`~dockerfabric.tasks.install_docker_ubuntu` or
+  :func:`~dockerfabric.tasks.install_docker_centos` installs the most recent release of Docker
   on the remote host. Furthermore, it assigns the currently signed-in user to the `docker` user group. This is
   required in order for the :ref:`cli` to work. Note that the user needs to create a new session for the
   group assignment to be effective. Fabric provides the function :func:`~fabric.network.disconnect_all` to enforce
   this if necessary.
-* Provided that Docker can only be contacted via a Unix socket, :func:`~dockerfabric.tasks.build_socat` is required
+* Provided that Docker can only be contacted via a Unix socket, :func:`~dockerfabric.tasks.build_socat_ubuntu` or
+  :func:`~dockerfabric.tasks.build_socat_centos` is required
   to handle the forwarding from the SSH connection. :func:`~dockerfabric.tasks.install_socat` downloads and compiles
   **socat** from source.
 * Once you have a **socat** binary, it can be replicated to other hosts using :func:`~dockerfabric.tasks.fetch_socat`
   and :func:`~dockerfabric.tasks.install_socat`.
+* As an alternative to compiling from source and copying, you can use the package manager to install **socat**.
 
-.. note:: Currently :func:`~dockerfabric.tasks.install_docker` is targeted to Ubuntu hosts. This will become
+.. note:: Currently aforementioned utility tasks are targeted to Ubuntu and CentOS hosts. This may become
           more flexible in future releases.
 
 General purpose tasks

@@ -2,6 +2,11 @@
 
 Change History
 ==============
+0.3.10
+------
+* Updated Docker service installation to follow reference instructions.
+* Added separate utility tasks for CentOS.
+* Fixed build failures in case of unicode errors.
 
 0.3.9
 -----
