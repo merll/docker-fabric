@@ -63,24 +63,46 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
 
 
 @task
-def install_docker():
+def install_docker_ubuntu(skip_group_assignment=False):
     """
-    Installs Docker on a remote machine and adds the current user to the `docker` user group.
+    Installs Docker on a remote machine running Ubuntu and adds the current user to the ``docker`` user group.
+
+    :param skip_group_assignment: If set to ``True``, skips the assignment to the ``docker`` group.
+    :type skip_group_assignment: bool
     """
-    sudo('apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9')
-    sudo('echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list')
-    sudo('apt-get update')
-    sudo('apt-get -y install lxc-docker')
-    assign_user_groups(env.user, ['docker'])
+    sudo('apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 '
+         '--recv-keys 58118E89F3A912897C070ADBF76221572C52609D')
+    sudo('echo deb https://apt.dockerproject.org/repo ubuntu-`lsb_release -c -s` main > '
+         '/etc/apt/sources.list.d/docker.list')
+    sudo('apt-get update -o Dir::Etc::sourcelist="sources.list.d/docker.list" -o Dir::Etc::sourceparts="-" '
+         '-o APT::Get::List-Cleanup="0"')
+    sudo('apt-get -y install docker-engine')
+    if not skip_group_assignment:
+        assign_user_groups(env.user, ['docker'])
 
 
 @task
-def build_socat():
+def install_docker_centos(skip_group_assignment=False):
     """
-    Downloads and installs the tool `socat` from source.
+    Installs Docker on a remote machine running CentOS and adds the current user to the ``docker`` user group.
+
+    :param skip_group_assignment: If set to ``True``, skips the assignment to the ``docker`` group.
+    :type skip_group_assignment: bool
     """
-    sudo('apt-get update')
-    sudo('apt-get -y install gcc make')
+    sudo("tee /etc/yum.repos.d/docker.repo <<-'EOF'"
+         "[dockerrepo]"
+         "name=Docker Repository"
+         "baseurl=https://yum.dockerproject.org/repo/main/centos/$releasever/"
+         "enabled=1"
+         "gpgcheck=1"
+         "gpgkey=https://yum.dockerproject.org/gpg"
+         "EOF")
+    sudo('yum install -y docker-engine')
+    if not skip_group_assignment:
+        assign_user_groups(env.user, ['docker'])
+
+
+def _build_socat():
     with temp_dir() as remote_tmp:
         socat_version = env.get('socat_version', DEFAULT_SOCAT_VERSION)
         src_dir = '{0}/socat-{1}'.format(remote_tmp, socat_version)
@@ -91,6 +113,25 @@ def build_socat():
             run('./configure')
             run('make')
             sudo('make install')
+
+
+@task
+def build_socat_ubuntu():
+    """
+    Downloads and installs the tool `socat` from source on Ubuntu.
+    """
+    sudo('apt-get update')
+    sudo('apt-get -y install gcc make')
+    _build_socat()
+
+
+@task
+def build_socat_centos():
+    """
+    Downloads and installs the tool `socat` from source on CentOS.
+    """
+    sudo('yum install -y gcc make')
+    _build_socat()
 
 
 @task
