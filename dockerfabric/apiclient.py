@@ -216,12 +216,13 @@ class DockerFabricClient(DockerClientWrapper):
         super(DockerFabricClient, self).cleanup_containers(include_initial=include_initial, exclude=exclude,
                                                            raise_on_error=raise_on_error)
 
-    def cleanup_images(self, remove_old=False, raise_on_error=False):
+    def cleanup_images(self, remove_old=False, keep_tags=None, raise_on_error=False):
         """
         Identical to :meth:`dockermap.map.base.DockerClientWrapper.cleanup_images` with additional logging.
         """
         self.push_log("Checking images for dependent images and containers.")
-        super(DockerFabricClient, self).cleanup_images(remove_old=remove_old, raise_on_error=raise_on_error)
+        super(DockerFabricClient, self).cleanup_images(remove_old=remove_old, keep_tags=keep_tags,
+                                                       raise_on_error=raise_on_error)
 
     def get_container_names(self):
         """

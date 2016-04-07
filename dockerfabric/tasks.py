@@ -268,7 +268,11 @@ def cleanup_images(remove_old=False):
     :param remove_old: Also remove images that do have a name, but no `latest` tag.
     :type remove_old: bool
     """
-    docker_fabric().cleanup_images(remove_old)
+    keep_tags = env.get('docker_keep_tags')
+    if remove_old:
+        docker_fabric().cleanup_images(remove_old, keep_tags=keep_tags)
+    else:
+        docker_fabric().cleanup_images(keep_tags=env.get('docker_keep_tags'))
 
 
 @task
