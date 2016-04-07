@@ -89,14 +89,14 @@ def install_docker_centos(skip_group_assignment=False):
     :param skip_group_assignment: If set to ``True``, skips the assignment to the ``docker`` group.
     :type skip_group_assignment: bool
     """
-    sudo("tee /etc/yum.repos.d/docker.repo <<-'EOF'"
-         "[dockerrepo]"
-         "name=Docker Repository"
-         "baseurl=https://yum.dockerproject.org/repo/main/centos/$releasever/"
-         "enabled=1"
-         "gpgcheck=1"
-         "gpgkey=https://yum.dockerproject.org/gpg"
-         "EOF")
+    sudo("tee /etc/yum.repos.d/docker.repo <<-'EOF'\n"
+         "[dockerrepo]\n"
+         "name=Docker Repository\n"
+         "baseurl=https://yum.dockerproject.org/repo/main/centos/$releasever/\n"
+         "enabled=1\n"
+         "gpgcheck=1\n"
+         "gpgkey=https://yum.dockerproject.org/gpg\n"
+         "EOF\n")
     sudo('yum install -y docker-engine')
     if not skip_group_assignment:
         assign_user_groups(env.user, ['docker'])
