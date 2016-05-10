@@ -5,7 +5,7 @@ import logging
 from fabric.api import env, settings, sudo
 from fabric.utils import puts, fastprint, error
 
-from dockermap.map.base import LOG_PROGRESS_FORMAT, DockerStatusError
+from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
 from dockermap.api import ClientConfiguration, DockerClientWrapper, MappingDockerClient
 from .base import ConnectionDict, get_local_port
 from .socat import socat_tunnels
