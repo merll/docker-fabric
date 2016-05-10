@@ -95,7 +95,7 @@ docker_fabric = DockerFabricConnections().get_connection
 
 class DockerClientConfiguration(ClientConfiguration):
     init_kwargs = ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
-    client_constructor = DockerFabricConnections().get_connection
+    client_constructor = docker_fabric
 
     def get_client(self):
         if 'fabric_host' in self:
