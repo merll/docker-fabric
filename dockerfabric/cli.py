@@ -105,8 +105,11 @@ class DockerCliClient(DockerUtilityMixin):
         self._call(cmd_str)
 
     def login(self, username, password=None, email=None, registry=None, **kwargs):
-        args = (registry, ) if registry else ()
-        cmd_str = self._out.get_cmd('login', *args, username=username, **kwargs)
+        kwargs['username'] = username
+        if registry:
+            cmd_str = self._out.get_cmd('login', registry, **kwargs)
+        else:
+            cmd_str = self._out.get_cmd('login', **kwargs)
         res = self._call(cmd_str, quiet=True)
         lines = res.splitlines()
         fastprint(lines)
