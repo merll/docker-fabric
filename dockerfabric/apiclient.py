@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 import logging
-from fabric.api import env, settings, sudo
+from fabric.api import env, sudo
 from fabric.utils import puts, fastprint, error
 
 from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
-from dockermap.api import ClientConfiguration, DockerClientWrapper, MappingDockerClient
-from .base import ConnectionDict, get_local_port
+from dockermap.api import DockerClientWrapper, MappingDockerClient
+from .base import DockerConnectionDict, get_local_port, FabricClientConfiguration
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
 
@@ -71,37 +71,6 @@ def _get_connection_args(base_url, remote_port, local_port):
             return _get_local_tunnel(base_url, remote_port, local_port)
         return _get_socat_tunnel(DEFAULT_SOCKET, local_port)
     return base_url, None
-
-
-class DockerFabricConnections(ConnectionDict):
-    """
-    Cache for connections to the Docker Remote API.
-    """
-    def get_connection(self, *args, **kwargs):
-        """
-        Create a new connection, or return an existing one from the cache. Uses Fabric's current ``env.host_string``
-        and the URL to the Docker service.
-
-        :param args: Additional arguments for the client constructor, if a new client has to be instantiated.
-        :param kwargs: Additional keyword args for the client constructor, if a new client has to be instantiated.
-        :rtype: DockerFabricClient
-        """
-        key = env.get('host_string'), kwargs.get('base_url', env.get('docker_base_url'))
-        return self.get(key, DockerFabricClient, *args, **kwargs)
-
-
-docker_fabric = DockerFabricConnections().get_connection
-
-
-class DockerClientConfiguration(ClientConfiguration):
-    init_kwargs = ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
-    client_constructor = docker_fabric
-
-    def get_client(self):
-        if 'fabric_host' in self:
-            with settings(host_string=self.fabric_host):
-                return super(DockerClientConfiguration, self).get_client()
-        return super(DockerClientConfiguration, self).get_client()
 
 
 class DockerFabricClient(DockerClientWrapper):
@@ -362,6 +331,19 @@ class DockerFabricClient(DockerClientWrapper):
 
     def run_cmd(self, command):
         sudo(command)
+
+
+class DockerFabricApiConnections(DockerConnectionDict):
+    client_class = DockerFabricClient
+
+
+# Still defined here for backwards compatibility.
+docker_fabric = DockerFabricApiConnections().get_connection
+
+
+class DockerClientConfiguration(FabricClientConfiguration):
+    init_kwargs = FabricClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
+    client_constructor = docker_fabric
 
 
 class ContainerFabric(MappingDockerClient):

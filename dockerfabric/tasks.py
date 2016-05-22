@@ -11,7 +11,7 @@ import six
 from dockermap.shortcuts import curl, untargz
 from dockermap.utils import expand_path
 from . import DEFAULT_SOCAT_VERSION, cli
-from .apiclient import docker_fabric
+from .api import docker_fabric
 from .utils.files import temp_dir
 from .utils.net import get_ip4_address, get_ip6_address
 from .utils.output import stdout_result

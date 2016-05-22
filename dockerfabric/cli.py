@@ -6,10 +6,129 @@ import posixpath
 
 from fabric.api import cd, get, run, sudo
 from fabric.network import needs_host
+from fabric.utils import fastprint
 
+from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
+                                  parse_images_output)
+from dockermap.client.docker_util import DockerUtilityMixin
+from dockermap.map.config import ClientConfiguration
 from dockermap.shortcuts import chmod, chown, targz, mkdir
+
+from .base import DockerConnectionDict
 from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
+
+
+class DockerCliClient(DockerUtilityMixin):
+    def __init__(self, cmd_prefix=None, default_bin='docker', base_url=None, tls=None, use_sudo=False):
+        super(DockerCliClient, self).__init__()
+        if base_url:
+            cmd_args = ['-H {0}'.format(base_url)]
+        else:
+            cmd_args = []
+        if tls:
+            cmd_args.append('--tls')
+        self._out = DockerCommandLineOutput(cmd_prefix, default_bin, cmd_args or None)
+        if use_sudo:
+            self._call_method = sudo
+        else:
+            self._call_method = run
+
+    def _call(self, cmd, quiet=False):
+        if cmd:
+            return self._call_method(cmd, shell=False, quiet=quiet)
+        return None
+
+    def create_container(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('create_container', *args, **kwargs)
+        return {'Id': self._call(cmd_str)}
+
+    def start(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('start', *args, **kwargs)
+        self._call(cmd_str)
+
+    def restart(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('restart', *args, **kwargs)
+        self._call(cmd_str)
+
+    def stop(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('stop', *args, **kwargs)
+        self._call(cmd_str)
+
+    def remove_container(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('remove_container', *args, **kwargs)
+        self._call(cmd_str)
+
+    def remove_image(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('remove_image', *args, **kwargs)
+        self._call(cmd_str)
+
+    def kill(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('kill', *args, **kwargs)
+        self._call(cmd_str)
+
+    def wait(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('wait', *args, **kwargs)
+        self._call(cmd_str)
+
+    def containers(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('containers', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_containers_output(res)
+
+    def inspect_container(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('inspect_container', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_inspect_output(res)
+
+    def images(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('images', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_images_output(res)
+
+    def pull(self, repository, tag=None, **kwargs):
+        repo_tag = '{0}:{1}'.format(repository, tag) if tag else repository
+        cmd_str = self._out.get_cmd('pull', repo_tag)
+        self._call(cmd_str)
+
+    def push(self, repository, tag=None, *args, **kwargs):
+        repo_tag = '{0}:{1}'.format(repository, tag) if tag else repository
+        cmd_str = self._out.get_cmd('push', repo_tag)
+        self._call(cmd_str)
+
+    def exec_create(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('exec_create', *args, **kwargs)
+        self._call(cmd_str)
+
+    def exec_start(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('exec_start', *args, **kwargs)
+        self._call(cmd_str)
+
+    def login(self, username, password=None, email=None, registry=None, **kwargs):
+        args = (registry, ) if registry else ()
+        cmd_str = self._out.get_cmd('login', *args, username=username, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        lines = res.splitlines()
+        fastprint(lines)
+        return 'Login Succeeded' in lines
+
+    def build(self, tag, add_latest_tag=False, add_tags=None, raise_on_error=False, **kwargs):
+        raise NotImplemented("Build is currently not supported.")
+
+    def push_log(self, info, level, *args, **kwargs):
+        pass
+
+
+class DockerCliConnections(DockerConnectionDict):
+    client_class = DockerCliClient
+
+
+docker_cli = DockerCliConnections().get_connection
+
+
+class DockerCliConfig(ClientConfiguration):
+    init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo'
+    client_constructor = docker_cli
 
 
 @needs_host
