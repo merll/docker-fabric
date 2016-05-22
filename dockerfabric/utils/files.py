@@ -12,7 +12,8 @@ from dockermap.shortcuts import rm, chmod, chown
 from .output import single_line_stdout
 
 
-_safe_name = lambda tarinfo: tarinfo.name[0] != '/' and not '..' in tarinfo.name
+def _safe_name(tarinfo):
+    return tarinfo.name[0] != '/' and '..' not in tarinfo.name
 
 
 def get_remote_temp():
