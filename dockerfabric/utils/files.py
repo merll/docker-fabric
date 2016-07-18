@@ -26,7 +26,7 @@ def get_remote_temp():
     return single_line_stdout('mktemp -d')
 
 
-def remove_ignore(path, use_sudo=False):
+def remove_ignore(path, use_sudo=False, force=False):
     """
     Recursively removes a file or directory, ignoring any errors that may occur. Should only be used for temporary
     files that can be assumed to be cleaned up at a later point.
@@ -35,9 +35,11 @@ def remove_ignore(path, use_sudo=False):
     :type path: unicode
     :param use_sudo: Use the `sudo` command.
     :type use_sudo: bool
+    :param force: Force the removal.
+    :type force: bool
     """
     which = sudo if use_sudo else run
-    which(rm(path, recursive=True), warn_only=True)
+    which(rm(path, recursive=True, force=force), warn_only=True)
 
 
 def is_directory(path, use_sudo=False):
@@ -62,25 +64,34 @@ def is_directory(path, use_sudo=False):
 
 
 @documented_contextmanager
-def temp_dir(apply_chown=None, apply_chmod=None):
+def temp_dir(apply_chown=None, apply_chmod=None, remove_using_sudo=None, remove_force=False):
     """
     Creates a temporary directory on the remote machine. The directory is removed when no longer needed. Failure to do
     so will be ignored.
 
     :param apply_chown: Optional; change the owner of the directory.
-    :type apply_chown: bool
+    :type apply_chown: unicode
     :param apply_chmod: Optional; change the permissions of the directory.
-    :type apply_chmod: bool
+    :type apply_chmod: unicode
+    :param remove_using_sudo: Use sudo for removing the directory. ``None`` (default) means it is used depending on
+     whether ``apply_chown`` has been set.
+    :type remove_using_sudo: bool | NoneType
+    :param remove_force: Force the removal.
+    :type remove_force: bool
     :return: Path to the temporary directory.
     :rtype: unicode
     """
     path = get_remote_temp()
-    if apply_chmod:
-        run(chmod(apply_chmod, path))
-    if apply_chown:
-        sudo(chown(apply_chown, path))
-    yield path
-    remove_ignore(path, True)
+    try:
+        if apply_chmod:
+            run(chmod(apply_chmod, path))
+        if apply_chown:
+            if remove_using_sudo is None:
+                remove_using_sudo = True
+            sudo(chown(apply_chown, path))
+        yield path
+    finally:
+        remove_ignore(path, use_sudo=remove_using_sudo, force=remove_force)
 
 
 @documented_contextmanager

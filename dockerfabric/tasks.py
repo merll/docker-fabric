@@ -253,11 +253,11 @@ def list_containers(list_all=True, short_image=True, full_ids=False, full_cmd=Fa
 
 
 @task
-def cleanup_containers():
+def cleanup_containers(include_initial=False):
     """
     Removes all containers that have finished running.
     """
-    docker_fabric().cleanup_containers()
+    docker_fabric().cleanup_containers(include_initial=include_initial)
 
 
 @task
@@ -269,10 +269,7 @@ def cleanup_images(remove_old=False):
     :type remove_old: bool
     """
     keep_tags = env.get('docker_keep_tags')
-    if remove_old:
-        docker_fabric().cleanup_images(remove_old, keep_tags=keep_tags)
-    else:
-        docker_fabric().cleanup_images(keep_tags=env.get('docker_keep_tags'))
+    docker_fabric().cleanup_images(remove_old=remove_old, keep_tags=keep_tags)
 
 
 @task
