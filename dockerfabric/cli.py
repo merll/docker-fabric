@@ -4,17 +4,15 @@ from __future__ import unicode_literals
 import os
 import posixpath
 
-from fabric.api import cd, get, run, sudo
+from fabric.api import cd, fastprint, get, put, run, settings, sudo
 from fabric.network import needs_host
-from fabric.utils import fastprint
 
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
                                   parse_images_output)
 from dockermap.client.docker_util import DockerUtilityMixin
-from dockermap.map.config import ClientConfiguration
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
-from .base import DockerConnectionDict
+from .base import DockerConnectionDict, FabricContainerClient, FabricClientConfiguration
 from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
 
@@ -116,7 +114,31 @@ class DockerCliClient(DockerUtilityMixin):
         return 'Login Succeeded' in lines
 
     def build(self, tag, add_latest_tag=False, add_tags=None, raise_on_error=False, **kwargs):
-        raise NotImplemented("Build is currently not supported.")
+        try:
+            context = kwargs['fileobj']
+        except KeyError:
+            raise ValueError("'fileobj' needs to be provided. Using 'path' is currently not implemented.")
+
+        repo, __, i_tag = tag.rpartition(':')
+        tag_set = set(add_tags or ())
+        if add_latest_tag:
+            tag_set.add('latest')
+        tag_set.discard(i_tag)
+        tags = [tag]
+        if repo and tag_set:
+            tags.extend(['{0}:{1}'.format(repo, t) for t in tag_set])
+
+        with temp_dir() as remote_tmp:
+            remote_fn = posixpath.join(remote_tmp, 'context')
+            put(context, remote_fn)
+            cmd_str = self._out.get_cmd('build', '- <', remote_fn, tag=tags, **kwargs)
+            with settings(warn_only=not raise_on_error):
+                res = self._call(cmd_str)
+        if res:
+            last_log = res.splitlines()[-1]
+            if last_log and last_log.startswith('Successfully built '):
+                return last_log[19:]  # Remove prefix
+        return None
 
     def push_log(self, info, level, *args, **kwargs):
         pass
@@ -129,9 +151,16 @@ class DockerCliConnections(DockerConnectionDict):
 docker_cli = DockerCliConnections().get_connection
 
 
-class DockerCliConfig(ClientConfiguration):
+class DockerCliConfig(FabricClientConfiguration):
     init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo'
     client_constructor = docker_cli
+
+
+class ContainerCliFabricClient(FabricContainerClient):
+    configuration_class = DockerCliConfig
+
+
+container_cli = ContainerCliFabricClient
 
 
 @needs_host
