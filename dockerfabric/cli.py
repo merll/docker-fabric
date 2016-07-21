@@ -102,6 +102,14 @@ class DockerCliClient(DockerUtilityMixin):
         cmd_str = self._out.get_cmd('exec_start', *args, **kwargs)
         self._call(cmd_str)
 
+    def tag(self, image, repository, tag=None, **kwargs):
+        if tag:
+            repo_tag = '{0}:{1}'.format(repository, tag)
+        else:
+            repo_tag = repository
+        cmd_str = self._out.get_cmd('tag', image, repo_tag, **kwargs)
+        return self._call(cmd_str)
+
     def login(self, username, password=None, email=None, registry=None, **kwargs):
         kwargs['username'] = username
         if registry:
@@ -115,29 +123,24 @@ class DockerCliClient(DockerUtilityMixin):
 
     def build(self, tag, add_latest_tag=False, add_tags=None, raise_on_error=False, **kwargs):
         try:
-            context = kwargs['fileobj']
+            context = kwargs.pop('fileobj')
         except KeyError:
             raise ValueError("'fileobj' needs to be provided. Using 'path' is currently not implemented.")
-
-        repo, __, i_tag = tag.rpartition(':')
-        tag_set = set(add_tags or ())
-        if add_latest_tag:
-            tag_set.add('latest')
-        tag_set.discard(i_tag)
-        tags = [tag]
-        if repo and tag_set:
-            tags.extend(['{0}:{1}'.format(repo, t) for t in tag_set])
+        for a in ['custom_context', 'encoding']:
+            kwargs.pop(a, None)
 
         with temp_dir() as remote_tmp:
             remote_fn = posixpath.join(remote_tmp, 'context')
             put(context, remote_fn)
-            cmd_str = self._out.get_cmd('build', '- <', remote_fn, tag=tags, **kwargs)
+            cmd_str = self._out.get_cmd('build', '- <', remote_fn, tag=tag, **kwargs)
             with settings(warn_only=not raise_on_error):
                 res = self._call(cmd_str)
         if res:
             last_log = res.splitlines()[-1]
             if last_log and last_log.startswith('Successfully built '):
-                return last_log[19:]  # Remove prefix
+                image_id = last_log[19:]  # Remove prefix
+                self.add_extra_tags(image_id, tag, add_tags, add_latest_tag)
+                return image_id
         return None
 
     def push_log(self, info, level, *args, **kwargs):
