@@ -6,7 +6,7 @@ Build Docker images, and run Docker containers in Fabric.
 
 Project: https://github.com/merll/docker-fabric
 
-Docs: https://docker-fabric.readthedocs.org/en/latest/
+Docs: https://docker-fabric.readthedocs.io/en/latest/
 
 
 Overview
