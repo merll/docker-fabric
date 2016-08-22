@@ -7,6 +7,7 @@ import posixpath
 from fabric.api import cd, env, fastprint, get, put, run, settings, sudo
 from fabric.network import needs_host
 
+from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
                                   parse_images_output)
 from dockermap.client.docker_util import DockerUtilityMixin
@@ -110,6 +111,11 @@ class DockerCliClient(DockerUtilityMixin):
         cmd_str = self._out.get_cmd('tag', image, repo_tag, **kwargs)
         return self._call(cmd_str)
 
+    def logs(self, *args, **kwargs):
+        kwargs.pop('stream', None)
+        cmd_str = self._out.get_cmd('logs', *args, **kwargs)
+        return self._call(cmd_str)
+
     def login(self, **kwargs):
         for key, variable in [
             ('username', 'user'),
@@ -168,6 +174,10 @@ docker_cli = DockerCliConnections().get_connection
 class DockerCliConfig(FabricClientConfiguration):
     init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo'
     client_constructor = docker_cli
+
+    def update_settings(self, **kwargs):
+        super(DockerCliConfig, self).update_settings(**kwargs)
+        self.use_host_config = USE_HC_MERGE
 
 
 class ContainerCliFabricClient(FabricContainerClient):
