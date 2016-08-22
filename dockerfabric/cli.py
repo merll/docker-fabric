@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import os
 import posixpath
 
-from fabric.api import cd, fastprint, get, put, run, settings, sudo
+from fabric.api import cd, env, fastprint, get, put, run, settings, sudo
 from fabric.network import needs_host
 
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
@@ -110,8 +110,19 @@ class DockerCliClient(DockerUtilityMixin):
         cmd_str = self._out.get_cmd('tag', image, repo_tag, **kwargs)
         return self._call(cmd_str)
 
-    def login(self, username, password=None, email=None, registry=None, **kwargs):
-        kwargs['username'] = username
+    def login(self, **kwargs):
+        for key, variable in [
+            ('username', 'user'),
+            ('password', 'password'),
+            ('email', 'mail'),
+            ('registry', 'repository'),
+            ('insecure_registry', 'insecure')
+        ]:
+            if key not in kwargs:
+                env_value = env.get('docker_registry_{0}'.format(variable))
+                if env_value:
+                    kwargs[key] = env_value
+        registry = kwargs.pop('registry', env.get('docker_registry_repository'))
         if registry:
             cmd_str = self._out.get_cmd('login', registry, **kwargs)
         else:
