@@ -86,12 +86,12 @@ class DockerCliClient(DockerUtilityMixin):
 
     def pull(self, repository, tag=None, **kwargs):
         repo_tag = '{0}:{1}'.format(repository, tag) if tag else repository
-        cmd_str = self._out.get_cmd('pull', repo_tag)
+        cmd_str = self._out.get_cmd('pull', repo_tag, **kwargs)
         self._call(cmd_str)
 
-    def push(self, repository, tag=None, *args, **kwargs):
+    def push(self, repository, tag=None, **kwargs):
         repo_tag = '{0}:{1}'.format(repository, tag) if tag else repository
-        cmd_str = self._out.get_cmd('push', repo_tag)
+        cmd_str = self._out.get_cmd('push', repo_tag, **kwargs)
         self._call(cmd_str)
 
     def exec_create(self, *args, **kwargs):
