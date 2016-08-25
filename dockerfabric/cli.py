@@ -114,7 +114,7 @@ class DockerCliClient(DockerUtilityMixin):
     def logs(self, *args, **kwargs):
         kwargs.pop('stream', None)
         cmd_str = self._out.get_cmd('logs', *args, **kwargs)
-        return self._call(cmd_str)
+        return self._call(cmd_str, quiet=True)
 
     def login(self, **kwargs):
         for key, variable in [
