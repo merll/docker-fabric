@@ -37,7 +37,7 @@ instead:
 
 For example, consider the following task::
 
-    from dockerfabric.apiclient import docker_fabric
+    from dockerfabric.api import docker_fabric
 
     @task
     def sample_task():

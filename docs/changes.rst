@@ -2,6 +2,14 @@
 
 Change History
 ==============
+0.4.0
+-----
+* Added Docker-Map's new features (keeping certain tags during cleanup and adding extra tags during build).
+* Added experimental :ref:`cli_client`. This has changed the module structure a bit, but previous imports should still work.
+  From now on however, ``docker_fabric`` and ``container_fabric`` should be imported from ``dockerfabric.api`` instead
+  of ``dockerfabric.apiclient``.
+* Fixed installation task for CentOS.
+
 0.3.10
 ------
 * Updated Docker service installation to follow reference instructions.

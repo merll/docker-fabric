@@ -142,7 +142,8 @@ The maintenance tasks :func:`~dockerfabric.tasks.cleanup_containers`, :func:`~do
 
 * :func:`~dockerfabric.tasks.cleanup_containers` removes all containers that have the `Exited` status;
 * :func:`~dockerfabric.tasks.cleanup_images` removes all untagged images, optionally with the argument ``True`` also
-  images without a `latest` tag.
+  images without a ``latest`` tag. Additional tags can be specified by setting the environment variable
+  ``docker_keep_tags``.
 * :func:`~dockerfabric.tasks.remove_all_containers` stops and removes all containers from the host.
 
 Image transfer

@@ -27,6 +27,7 @@ Contents
    installation
    start
    guide/apiclient
+   guide/cli
    guide/utils
    guide/tasks
    guide/containers

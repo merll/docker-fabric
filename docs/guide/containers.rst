@@ -69,7 +69,7 @@ reference to other configuration variables::
 In order to use this configuration set, create a :class:`~dockerfabric.apiclient.ContainerFabric` instance from this
 map. For example, in order to launch the web server and all dependencies, run::
 
-    from dockerfabric.apiclient import container_fabric
+    from dockerfabric.api import container_fabric
 
     container_fabric().startup('web_server')
 
