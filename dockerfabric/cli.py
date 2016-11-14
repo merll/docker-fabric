@@ -9,7 +9,7 @@ from fabric.network import needs_host
 
 from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
-                                  parse_images_output)
+                                  parse_images_output, parse_version_output)
 from dockermap.client.docker_util import DockerUtilityMixin
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
@@ -159,6 +159,12 @@ class DockerCliClient(DockerUtilityMixin):
                 self.add_extra_tags(image_id, tag, add_tags, add_latest_tag)
                 return image_id
         return None
+
+    def version(self, **kwargs):
+        kwargs.pop('api_version', None)
+        cmd_str = self._out.get_cmd('version')
+        res = self._call(cmd_str, quiet=True)
+        return parse_version_output(res)
 
     def push_log(self, info, level, *args, **kwargs):
         pass
