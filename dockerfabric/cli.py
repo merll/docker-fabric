@@ -32,6 +32,8 @@ class DockerCliClient(DockerUtilityMixin):
             self._call_method = sudo
         else:
             self._call_method = run
+        self.api_version = None
+        self._update_api_version()
 
     def _call(self, cmd, quiet=False):
         if cmd:
@@ -164,10 +166,20 @@ class DockerCliClient(DockerUtilityMixin):
         kwargs.pop('api_version', None)
         cmd_str = self._out.get_cmd('version')
         res = self._call(cmd_str, quiet=True)
-        return parse_version_output(res)
+        version_dict = parse_version_output(res)
+        return version_dict
 
     def push_log(self, info, level, *args, **kwargs):
         pass
+
+    def _update_api_version(self):
+        if self.api_version and self.api_version != 'auto':
+            return
+        version_dict = self.version()
+        if 'APIVersion' in version_dict:
+            self.api_version = version_dict['APIVersion']
+        elif 'ApiVersion' in version_dict:
+            self.api_version = version_dict['ApiVersion']
 
 
 class DockerCliConnections(DockerConnectionDict):
