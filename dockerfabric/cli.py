@@ -19,6 +19,24 @@ from .utils.files import temp_dir, is_directory
 
 
 class DockerCliClient(DockerUtilityMixin):
+    """
+    Docker client for Fabric using the command line interface on a remote host.
+
+    :param cmd_prefix: Custom prefix to prepend to the Docker command line.
+    :type cmd_prefix: unicode
+    :param default_bin: Docker binary to use. If not set, uses ``docker``.
+    :type default_bin: unicode
+    :param base_url: URL to connect to; if not set, will refer to ``env.docker_base_url`` or use ``None``, which by
+     default attempts a connection on a Unix socket at ``/var/run/docker.sock``.
+    :type base_url: unicode
+    :param tls: Whether to use TLS on the connection to the Docker service.
+    :type tls: bool
+    :param use_sudo: Whether to use ``sudo`` when performing Docker commands.
+    :type use_sudo: bool
+    :param debug: If set to ``True``, echoes each command and its console output. Some commands are echoed either way
+     for some feedback.
+    :type debug: bool
+    """
     def __init__(self, cmd_prefix=None, default_bin=None, base_url=None, tls=None, use_sudo=None, debug=None):
         super(DockerCliClient, self).__init__()
         base_url = base_url or env.get('docker_base_url')
