@@ -268,12 +268,12 @@ class DockerFabricClient(DockerClientWrapper):
         self.push_log("Restarting container '{0}'.".format(container))
         super(DockerFabricClient, self).restart(container, **kwargs)
 
-    def remove_all_containers(self):
+    def remove_all_containers(self, **kwargs):
         """
         Identical to :meth:`dockermap.map.base.DockerClientWrapper.remove_all_containers` with additional logging.
         """
         self.push_log("Fetching container list.")
-        super(DockerFabricClient, self).remove_all_containers()
+        super(DockerFabricClient, self).remove_all_containers(**kwargs)
 
     def remove_container(self, container, raise_on_error=False, **kwargs):
         """
