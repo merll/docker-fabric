@@ -19,25 +19,28 @@ from .utils.files import temp_dir, is_directory
 
 
 class DockerCliClient(DockerUtilityMixin):
-    def __init__(self, cmd_prefix=None, default_bin='docker', base_url=None, tls=None, use_sudo=False):
+    def __init__(self, cmd_prefix=None, default_bin=None, base_url=None, tls=None, use_sudo=None, debug=None):
         super(DockerCliClient, self).__init__()
+        base_url = base_url or env.get('docker_base_url')
         if base_url:
             cmd_args = ['-H {0}'.format(base_url)]
         else:
             cmd_args = []
-        if tls:
+        if tls or (tls is None and env.get('docker_tls')):
             cmd_args.append('--tls')
-        self._out = DockerCommandLineOutput(cmd_prefix, default_bin, cmd_args or None)
-        if use_sudo:
+        self._out = DockerCommandLineOutput(cmd_prefix or env.get('docker_cli_prefix'),
+                                            default_bin or env.get('docker_cli_bin', 'docker'), cmd_args or None)
+        if use_sudo or (use_sudo is None and env.get('docker_cli_sudo')):
             self._call_method = sudo
         else:
             self._call_method = run
+        self._quiet = not (debug or (debug is None and env.get('docker_cli_debug')))
         self.api_version = None
         self._update_api_version()
 
     def _call(self, cmd, quiet=False):
         if cmd:
-            return self._call_method(cmd, shell=False, quiet=quiet)
+            return self._call_method(cmd, shell=False, quiet=quiet and self._quiet)
         return None
 
     def create_container(self, *args, **kwargs):
@@ -190,7 +193,7 @@ docker_cli = DockerCliConnections().get_connection
 
 
 class DockerCliConfig(FabricClientConfiguration):
-    init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo'
+    init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo', 'debug'
     client_constructor = docker_cli
 
     def update_settings(self, **kwargs):
