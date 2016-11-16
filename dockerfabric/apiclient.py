@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import logging
 from fabric.api import env, sudo
 from fabric.utils import puts, fastprint, error
 
 from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
-from dockermap.api import DockerClientWrapper, MappingDockerClient
+from dockermap.api import DockerClientWrapper
 from .base import DockerConnectionDict, get_local_port, FabricClientConfiguration, FabricContainerClient
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
