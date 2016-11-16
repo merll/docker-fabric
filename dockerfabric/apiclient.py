@@ -74,6 +74,8 @@ class DockerFabricClient(DockerClientWrapper):
     :param base_url: URL to connect to; if not set, will refer to ``env.docker_base_url`` or use ``None``, which by
      default attempts a connection on a Unix socket at ``/var/run/docker.sock``.
     :type base_url: unicode
+    :param tls: Whether to use TLS on the connection to the Docker service.
+    :type tls: bool
     :param version: API version; if not set, will try to use ``env.docker_api_version``; otherwise defaults to
      :const:`~docker.client.DEFAULT_DOCKER_API_VERSION`.
     :type version: unicode
@@ -89,16 +91,17 @@ class DockerFabricClient(DockerClientWrapper):
     :type tunnel_local_port: int
     :param kwargs: Additional kwargs for :class:`docker.client.Client`
     """
-    def __init__(self, base_url=None, version=None, timeout=None, tunnel_remote_port=None, tunnel_local_port=None,
-                 **kwargs):
+    def __init__(self, base_url=None, tls=None, version=None, timeout=None, tunnel_remote_port=None,
+                 tunnel_local_port=None, **kwargs):
         url = base_url or env.get('docker_base_url')
+        use_tls = tls or (tls is None and env.get('docker_tls', False))
         api_version = version or env.get('docker_api_version')
         client_timeout = timeout or env.get('docker_timeout')
         remote_port = tunnel_remote_port or env.get('docker_tunnel_remote_port')
         local_port = tunnel_local_port or env.get('docker_tunnel_local_port', remote_port)
         conn_url, self._tunnel = _get_connection_args(url, remote_port, local_port)
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout,
-                                                 **kwargs)
+                                                 tls=use_tls, **kwargs)
 
     def push_log(self, info, level=logging.INFO, *args, **kwargs):
         """
