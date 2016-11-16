@@ -103,12 +103,14 @@ class DockerFabricClient(DockerClientWrapper):
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout,
                                                  tls=use_tls, **kwargs)
 
-    def push_log(self, info, level=logging.INFO, *args, **kwargs):
+    def push_log(self, info, level=None, *args, **kwargs):
         """
         Prints the log as usual for fabric output, enhanced with the prefix "docker".
 
         :param info: Log output.
         :type info: unicode
+        :param level: Logging level. Has no effect here.
+        :type level: int
         """
         if args:
             msg = info % args
