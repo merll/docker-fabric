@@ -59,10 +59,10 @@ class FabricClientConfiguration(ClientConfiguration):
 
 class FabricContainerClient(MappingDockerClient):
     """
-    Convenience class for using a :class:`~dockermap.map.container.ContainerMap` on a :class:`DockerFabricClient`.
+    Convenience class for using a :class:`~dockermap.map.config.main.ContainerMap` on a :class:`DockerFabricClient`.
 
     :param container_maps: Container map or a tuple / list thereof.
-    :type container_maps: list[dockermap.map.container.ContainerMap] | dockermap.map.container.ContainerMap
+    :type container_maps: list[dockermap.map.config.main.ContainerMap] | dockermap.map.config.main.ContainerMap
     :param docker_client: Default Docker client instance.
     :type docker_client: FabricClientConfiguration
     :param clients: Optional dictionary of Docker client configuration objects.

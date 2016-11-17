@@ -31,7 +31,7 @@ def docker_fabric(*args, **kwargs):
 def container_fabric(container_maps=None, docker_client=None, clients=None, client_implementation=None):
     """
     :param container_maps: Container map or a tuple / list thereof.
-    :type container_maps: list[dockermap.map.container.ContainerMap] | dockermap.map.container.ContainerMap
+    :type container_maps: list[dockermap.map.config.main.ContainerMap] | dockermap.map.config.main.ContainerMap
     :param docker_client: Default Docker client instance.
     :type docker_client: DockerClientConfiguration or docker.docker.Client
     :param clients: Optional dictionary of Docker client configuration objects.
