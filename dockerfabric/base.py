@@ -2,11 +2,13 @@
 from __future__ import unicode_literals
 
 import ctypes
+import logging
 import multiprocessing
 
 from dockermap.api import MappingDockerClient, ClientConfiguration
 from fabric.api import env, settings
 
+log = logging.getLogger(__name__)
 port_offset = multiprocessing.Value(ctypes.c_ulong)
 
 
@@ -26,8 +28,9 @@ class ConnectionDict(dict):
     def get_or_create_connection(self, key, d, *args, **kwargs):
         e = self.get(key)
         if e is None:
-            e = d(*args, **kwargs)
-            self[k] = e
+            log.debug("Creating new %s connection for key %s with args: %s, kwargs: %s",
+                      self.__class__.__name__, key, args, kwargs)
+            self[key] = e = d(*args, **kwargs)
         return e
 
 
