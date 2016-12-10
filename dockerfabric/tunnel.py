@@ -31,7 +31,7 @@ class LocalTunnels(ConnectionDict):
 
         remote_host, remote_port, bind_host, init_bind_port = item
         key = remote_host, remote_port
-        return self.get(key, _connect_local_tunnel)
+        return self.get_or_create_connection(key, _connect_local_tunnel)
 
 
 local_tunnels = LocalTunnels()

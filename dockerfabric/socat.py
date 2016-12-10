@@ -30,7 +30,7 @@ class SocketTunnels(ConnectionDict):
 
         remote_socket, init_local_port = item
         key = env.host_string, remote_socket
-        return self.get(key, _connect_socket_tunnel)
+        return self.get_or_create_connection(key, _connect_socket_tunnel)
 
 
 socat_tunnels = SocketTunnels()

@@ -23,8 +23,8 @@ def _get_default_config(client_configs):
 
 
 class ConnectionDict(dict):
-    def get(self, k, d, *args, **kwargs):
-        e = super(ConnectionDict, self).get(k)
+    def get_or_create_connection(self, key, d, *args, **kwargs):
+        e = self.get(key)
         if e is None:
             e = d(*args, **kwargs)
             self[k] = e
@@ -46,7 +46,7 @@ class DockerConnectionDict(ConnectionDict):
         :param kwargs: Additional keyword args for the client constructor, if a new client has to be instantiated.
         """
         key = env.get('host_string'), kwargs.get('base_url', env.get('docker_base_url'))
-        return self.get(key, self.client_class, *args, **kwargs)
+        return self.get_or_create_connection(key, self.client_class, *args, **kwargs)
 
 
 class FabricClientConfiguration(ClientConfiguration):
