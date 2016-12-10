@@ -150,7 +150,7 @@ For checking if everything is set up properly, you can run the included task `ve
 against a local Vagrant machine (using the default setup, only allowing socket connections) and tunnelling through
 port 2224 should show a similar result::
 
-    [127.0.0.1] Executing task 'docker.check_version'
+    [127.0.0.1] Executing task 'docker.version'
     [127.0.0.1]
     KernelVersion: 3.13.0-34-generic
     Arch:          amd64
