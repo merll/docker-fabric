@@ -76,10 +76,10 @@ class DockerFabricClient(DockerClientWrapper):
     :param tls: Whether to use TLS on the connection to the Docker service.
     :type tls: bool
     :param version: API version; if not set, will try to use ``env.docker_api_version``; otherwise defaults to
-     :const:`~docker.client.DEFAULT_DOCKER_API_VERSION`.
+     :const:`~docker.constants.DEFAULT_DOCKER_API_VERSION`.
     :type version: unicode
     :param timeout: Client timeout for Docker; if not set, will try to use ``env.docker_timeout``; otherwise defaults to
-     :const:`~docker.client.DEFAULT_TIMEOUT_SECONDS`.
+     :const:`~docker.constants.DEFAULT_TIMEOUT_SECONDS`.
     :type timeout: int
     :param tunnel_remote_port: Optional, port of the remote service; if port is included in ``base_url``, the latter
      is preferred. If not set, will try to use ``env.docker_tunnel_remote_port``; otherwise defaults to ``None``.
