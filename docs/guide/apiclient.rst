@@ -139,17 +139,17 @@ Multi-client configuration
 In addition to the previous example, adding the following additional lines in your project's ``fabfile.py``::
 
     env.docker_clients = {
-        'client1': DockerClientConfiguration({
-            'fabric_host': 'host1',
-            'timeout': 40,  # Host needs longer timeouts than usual.
-        }),
-        'client2': DockerClientConfiguration({
-            'fabric_host': 'host2',
-            'interfaces': {
+        'client1': DockerClientConfiguration(
+            fabric_host='host1',
+            timeout=40,  # Host needs longer timeouts than usual.
+        ),
+        'client2': DockerClientConfiguration(
+            fabric_host='host2',
+            interfaces={
                 'private': '10.x.x.11',  # Host will be publishing some ports.
                 'public': '178.x.x.11',
             },
-        }),
+        ),
     }
 
 A single client can be instantiated using::
