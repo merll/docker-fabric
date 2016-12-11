@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 from fabric.api import env
 
-from .apiclient import DockerFabricApiConnections, ContainerApiFabricClient
-from .cli import DockerCliConnections, ContainerCliFabricClient
+from .apiclient import DockerFabricApiConnections, ContainerApiFabricClient, DockerClientConfiguration
+from .cli import DockerCliConnections, ContainerCliFabricClient, DockerCliConfig
 
 CLIENT_API = 'API'
 CLIENT_CLI = 'CLI'
@@ -33,9 +33,9 @@ def container_fabric(container_maps=None, docker_client=None, clients=None, clie
     :param container_maps: Container map or a tuple / list thereof.
     :type container_maps: list[dockermap.map.config.main.ContainerMap] | dockermap.map.config.main.ContainerMap
     :param docker_client: Default Docker client instance.
-    :type docker_client: DockerClientConfiguration or docker.docker.Client
+    :type docker_client: dockerfabric.base.FabricClientConfiguration or docker.docker.Client
     :param clients: Optional dictionary of Docker client configuration objects.
-    :type clients: dict[unicode | str, DockerClientConfiguration]
+    :type clients: dict[unicode | str, dockerfabric.base.FabricClientConfiguration]
     :param client_implementation: Client implementation to use (API or CLI).
     :type client_implementation: unicode | str
     :return: Container mapping client.
