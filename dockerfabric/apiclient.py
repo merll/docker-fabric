@@ -327,17 +327,13 @@ class DockerFabricClient(DockerClientWrapper):
         sudo(command)
 
 
-class DockerFabricApiConnections(DockerConnectionDict):
-    client_class = DockerFabricClient
-
-
-# Still defined here for backwards compatibility.
-docker_fabric = DockerFabricApiConnections().get_connection
-
-
 class DockerClientConfiguration(FabricClientConfiguration):
     init_kwargs = FabricClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
-    client_constructor = docker_fabric
+    client_constructor = DockerFabricClient
+
+
+class DockerFabricApiConnections(DockerConnectionDict):
+    configuration_class = DockerClientConfiguration
 
 
 class ContainerApiFabricClient(FabricContainerClient):
@@ -345,4 +341,5 @@ class ContainerApiFabricClient(FabricContainerClient):
 
 
 # Still defined here for backwards compatibility.
+docker_fabric = DockerFabricApiConnections().get_connection
 container_fabric = ContainerApiFabricClient

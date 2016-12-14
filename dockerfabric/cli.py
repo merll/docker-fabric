@@ -203,26 +203,24 @@ class DockerCliClient(DockerUtilityMixin):
             self.api_version = version_dict['ApiVersion']
 
 
-class DockerCliConnections(DockerConnectionDict):
-    client_class = DockerCliClient
-
-
-docker_cli = DockerCliConnections().get_connection
-
-
 class DockerCliConfig(FabricClientConfiguration):
     init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo', 'debug'
-    client_constructor = docker_cli
+    client_constructor = DockerCliClient
 
     def update_settings(self, **kwargs):
         super(DockerCliConfig, self).update_settings(**kwargs)
         self.use_host_config = USE_HC_MERGE
 
 
+class DockerCliConnections(DockerConnectionDict):
+    configuration_class = DockerCliConfig
+
+
 class ContainerCliFabricClient(FabricContainerClient):
     configuration_class = DockerCliConfig
 
 
+docker_cli = DockerCliConnections().get_connection
 container_cli = ContainerCliFabricClient
 
 

@@ -38,7 +38,7 @@ class DockerConnectionDict(ConnectionDict):
     """
     Cache for connections to Docker clients.
     """
-    client_class = None
+    configuration_class = None
 
     def get_connection(self, *args, **kwargs):
         """
@@ -49,7 +49,13 @@ class DockerConnectionDict(ConnectionDict):
         :param kwargs: Additional keyword args for the client constructor, if a new client has to be instantiated.
         """
         key = env.get('host_string'), kwargs.get('base_url', env.get('docker_base_url'))
-        return self.get_or_create_connection(key, self.client_class, *args, **kwargs)
+        default_config = _get_default_config(None)
+        if default_config:
+            if key not in self:
+                self[key] = default_config
+            return default_config.get_client()
+        config = self.get_or_create_connection(key, self.configuration_class, *args, **kwargs)
+        return config.get_client()
 
 
 class FabricClientConfiguration(ClientConfiguration):
