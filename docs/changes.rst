@@ -2,6 +2,14 @@
 
 Change History
 ==============
+0.4.1
+-----
+* Fixed side-effects of modifying the ``base_url`` for SSH tunnels, causing problems when re-using a client returned
+  by the ``docker_fabric()`` function (`Issue #12 <https://github.com/merll/docker-fabric/issues/12>`_).
+* Added ``version`` method to CLI client.
+* Added ``env.docker_cli_debug`` for echoing commands.
+* API clients' ``remove_all_containers`` now forwards keyword arguments.
+
 0.4.0
 -----
 * Added Docker-Map's new features (keeping certain tags during cleanup and adding extra tags during build).
