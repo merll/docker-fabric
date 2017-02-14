@@ -9,7 +9,7 @@ from fabric.network import needs_host
 
 from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
-                                  parse_images_output, parse_version_output)
+                                  parse_images_output, parse_version_output, parse_top_output)
 from dockermap.client.docker_util import DockerUtilityMixin
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
@@ -125,6 +125,14 @@ class DockerCliClient(DockerUtilityMixin):
     def exec_start(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('exec_start', *args, **kwargs)
         self._call(cmd_str)
+
+    def top(self, container, ps_args):
+        if ps_args:
+            cmd_str = self._out.get_cmd('top', container, ps_args)
+        else:
+            cmd_str = self._out.get_cmd('top', container)
+        res = self._call(cmd_str, quiet=True)
+        return parse_top_output(res)
 
     def tag(self, image, repository, tag=None, **kwargs):
         if tag:
