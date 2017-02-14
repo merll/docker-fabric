@@ -2,6 +2,10 @@
 
 Change History
 ==============
+0.4.2
+-----
+* Added ``top`` method to CLI client.
+
 0.4.1
 -----
 * Fixed side-effects of modifying the ``base_url`` for SSH tunnels, causing problems when re-using a client returned
