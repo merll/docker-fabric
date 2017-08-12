@@ -169,7 +169,7 @@ class DockerCliClient(DockerUtilityMixin):
         fastprint(lines)
         return 'Login Succeeded' in lines
 
-    def build(self, tag, add_latest_tag=False, add_tags=None, raise_on_error=False, **kwargs):
+    def build(self, tag, add_latest_tag=False, add_tags=None, raise_on_error=True, **kwargs):
         try:
             context = kwargs.pop('fileobj')
         except KeyError:

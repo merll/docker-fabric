@@ -119,3 +119,10 @@ def get_local_port(init_port):
         current_offset = port_offset.value
         port_offset.value += 1
     return int(init_port) + current_offset
+
+
+def set_raise_on_error(kwargs, default=True):
+    r = kwargs.get('raise_on_error')
+    if r is None:
+        return env.get('docker_default_raise_on_error', default)
+    return r

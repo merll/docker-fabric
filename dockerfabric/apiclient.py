@@ -6,7 +6,8 @@ from fabric.utils import puts, fastprint, error
 
 from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
 from dockermap.api import DockerClientWrapper
-from .base import DockerConnectionDict, get_local_port, FabricClientConfiguration, FabricContainerClient
+from .base import (get_local_port, set_raise_on_error, DockerConnectionDict, FabricClientConfiguration,
+                   FabricContainerClient)
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
 
@@ -147,8 +148,8 @@ class DockerFabricClient(DockerClientWrapper):
         """
         Identical to :meth:`dockermap.client.base.DockerClientWrapper.build` with additional logging.
         """
-        kwargs['raise_on_error'] = True
         self.push_log("Building image '{0}'.".format(tag))
+        set_raise_on_error(kwargs)
         try:
             return super(DockerFabricClient, self).build(tag, **kwargs)
         except DockerStatusError as e:
@@ -169,21 +170,22 @@ class DockerFabricClient(DockerClientWrapper):
         self.push_log("Receiving tarball for resource '{0}:{1}' and storing as {2}".format(container, resource, local_filename))
         super(DockerFabricClient, self).copy_resource(container, resource, local_filename)
 
-    def cleanup_containers(self, include_initial=False, exclude=None, raise_on_error=False):
+    def cleanup_containers(self, include_initial=False, exclude=None, **kwargs):
         """
         Identical to :meth:`dockermap.client.docker_util.DockerUtilityMixin.cleanup_containers` with additional logging.
         """
         self.push_log("Generating list of stopped containers.")
-        super(DockerFabricClient, self).cleanup_containers(include_initial=include_initial, exclude=exclude,
-                                                           raise_on_error=raise_on_error)
+        set_raise_on_error(kwargs, False)
+        return super(DockerFabricClient, self).cleanup_containers(include_initial=include_initial, exclude=exclude,
+                                                                  **kwargs)
 
-    def cleanup_images(self, remove_old=False, keep_tags=None, raise_on_error=False):
+    def cleanup_images(self, remove_old=False, keep_tags=None, **kwargs):
         """
         Identical to :meth:`dockermap.client.docker_util.DockerUtilityMixin.cleanup_images` with additional logging.
         """
         self.push_log("Checking images for dependent images and containers.")
-        super(DockerFabricClient, self).cleanup_images(remove_old=remove_old, keep_tags=keep_tags,
-                                                       raise_on_error=raise_on_error)
+        set_raise_on_error(kwargs, False)
+        return super(DockerFabricClient, self).cleanup_images(remove_old=remove_old, keep_tags=keep_tags, **kwargs)
 
     def get_container_names(self):
         """
@@ -242,8 +244,7 @@ class DockerFabricClient(DockerClientWrapper):
           ``env.docker_registry_insecure``.
         """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        if 'raise_on_error' not in kwargs:
-            kwargs['raise_on_error'] = True
+        set_raise_on_error(kwargs)
         try:
             return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream,
                                                         insecure_registry=c_insecure, **kwargs)
@@ -259,7 +260,7 @@ class DockerFabricClient(DockerClientWrapper):
           ``env.docker_registry_insecure``.
         """
         c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        kwargs['raise_on_error'] = True
+        set_raise_on_error(kwargs)
         try:
             return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure,
                                                         **kwargs)
@@ -279,20 +280,23 @@ class DockerFabricClient(DockerClientWrapper):
         logging.
         """
         self.push_log("Fetching container list.")
+        set_raise_on_error(kwargs)
         super(DockerFabricClient, self).remove_all_containers(**kwargs)
 
-    def remove_container(self, container, raise_on_error=False, **kwargs):
+    def remove_container(self, container, **kwargs):
         """
         Identical to :meth:`dockermap.client.base.DockerClientWrapper.remove_container` with additional logging.
         """
         self.push_log("Removing container '{0}'.".format(container))
-        super(DockerFabricClient, self).remove_container(container, raise_on_error=raise_on_error, **kwargs)
+        set_raise_on_error(kwargs)
+        super(DockerFabricClient, self).remove_container(container, **kwargs)
 
     def remove_image(self, image, **kwargs):
         """
         Identical to :meth:`dockermap.client.base.DockerClientWrapper.remove_image` with additional logging.
         """
         self.push_log("Removing image '{0}'.".format(image))
+        set_raise_on_error(kwargs)
         super(DockerFabricClient, self).remove_image(image, **kwargs)
 
     def save_image(self, image, local_filename):
