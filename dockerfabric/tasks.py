@@ -253,32 +253,44 @@ def list_containers(list_all=True, short_image=True, full_ids=False, full_cmd=Fa
 
 
 @task
-def cleanup_containers(include_initial=False):
+def cleanup_containers(**kwargs):
     """
     Removes all containers that have finished running.
     """
-    docker_fabric().cleanup_containers(include_initial=include_initial)
+    containers = docker_fabric().cleanup_containers(**kwargs)
+    if kwargs.get('list_only'):
+        puts('Existing containers:')
+        for c_id, c_name in containers:
+            fastprint('{0}  {1}'.format(c_id, c_name), end='\n')
 
 
 @task
-def cleanup_images(remove_old=False):
+def cleanup_images(remove_old=False, **kwargs):
     """
     Removes all images that have no name, and that are not references as dependency by any other named image.
 
     :param remove_old: Also remove images that do have a name, but no `latest` tag.
     :type remove_old: bool
     """
-    keep_tags = env.get('docker_keep_tags')
-    docker_fabric().cleanup_images(remove_old=remove_old, keep_tags=keep_tags)
+    keep_tags = kwargs.get('keep_tags', env.get('docker_keep_tags'))
+    removed_images = docker_fabric().cleanup_images(remove_old=remove_old, keep_tags=keep_tags, **kwargs)
+    if kwargs.get('list_only'):
+        puts('Unused images:')
+        for image_name in removed_images:
+            fastprint(image_name, end='\n')
 
 
 @task
-def remove_all_containers():
+def remove_all_containers(**kwargs):
     """
     Stops and removes all containers from the remote. Use with caution outside of a development environment!
     :return:
     """
-    docker_fabric().remove_all_containers()
+    containers = docker_fabric().remove_all_containers(**kwargs)
+    if kwargs.get('list_only'):
+        puts('Existing containers:')
+        for c_id in containers[1]:
+            fastprint(c_id, end='\n')
 
 
 @task
