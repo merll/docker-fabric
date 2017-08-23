@@ -24,24 +24,23 @@ Dependencies
 The following libraries will be automatically installed from PyPI:
 
 * Fabric (tested with >=1.8.0)
-* docker-py (>=0.5.0)
-* docker-map (>=0.3.2)
+* docker-py (>=1.9.0)
+* docker-map (>=0.8.0)
 * Optional: PyYAML (tested with 3.11) for YAML configuration import
 
 
 Docker service
 ^^^^^^^^^^^^^^
-Docker needs to be installed on the target machine. On Ubuntu, you can use the task `install_docker` for automatically
-installing and configuring the latest release. Additional configuration is only needed if the service has been
-installed otherwise.
+Docker needs to be installed on the target machine. There used to be a utility task for this, but the required steps for
+installation tended to change too much too quickly for maintaining them properly. Please follow the
+`Docker installation instructions`_ according to your operating system.
 
 
 Socat
 ^^^^^
 The tool Socat_ is needed in order to tunnel local TCP-IP connections to a unix socket on the target machine. The
-``socat`` binary needs to be in the search path. You can either install it yourself and transfer the binary using the
-Fabric task `install_socat`, or use the task `build_socat` (currently only Ubuntu) to build it directly on your target
-machine.
+``socat`` binary needs to be in the search path. It is included in most common Linux distributions, e.g. for CentOS
+you can install it using ``yum install socat``; or you can download the source code and compile it yourself.
 
 
 Configuration
@@ -168,3 +167,4 @@ port 2224 should show a similar result::
 .. _Docker-Map: https://pypi.python.org/pypi/docker-map
 .. _Socat: http://www.dest-unreach.org/socat/
 .. _Fabric's env: http://docs.fabfile.org/en/latest/usage/env.html
+.. _Docker installation instructions: https://docs.docker.com/engine/installation/
