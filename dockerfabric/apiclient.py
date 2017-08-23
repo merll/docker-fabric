@@ -187,21 +187,6 @@ class DockerFabricClient(DockerClientWrapper):
         set_raise_on_error(kwargs, False)
         return super(DockerFabricClient, self).cleanup_images(remove_old=remove_old, keep_tags=keep_tags, **kwargs)
 
-    def get_container_names(self):
-        """
-        Identical to :meth:`dockermap.client.docker_util.DockerUtilityMixin.get_container_names` with additional
-        logging.
-        """
-        self.push_log("Fetching container list.")
-        return super(DockerFabricClient, self).get_container_names()
-
-    def get_image_tags(self):
-        """
-        Identical to :meth:`dockermap.client.docker_util.DockerUtilityMixin.get_image_tags` with additional logging.
-        """
-        self.push_log("Fetching image list.")
-        return super(DockerFabricClient, self).get_image_tags()
-
     def import_image(self, image=None, tag='latest', **kwargs):
         """
         Identical to :meth:`docker.api.image.ImageApiMixin.import_image` with additional logging.
