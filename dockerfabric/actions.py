@@ -114,6 +114,28 @@ def update(container, **kwargs):
 
 
 @task
+def kill(container, **kwargs):
+    """
+    Sends a signal to a container, by default ``SIGKILL``. You can also pass a different signal such as ``SIGHUP``.
+
+    :param container: Container configuration name.
+    :param kwargs: Keyword arguments to the action implementation.
+    """
+    container_fabric().signal(container, **kwargs)
+
+
+@task
+def pull_images(container, **kwargs):
+    """
+    Pulls missing images, including dependencies.
+
+    :param container: Container configuration name.
+    :param kwargs: Keyword arguments to the action implementation.
+    """
+    container_fabric().pull_images(container, **kwargs)
+
+
+@task
 def script(container, script_path, fail_nonzero=False, upload_dir=False, **kwargs):
     """
     Runs a script inside a container, which is created with all its dependencies. The container is removed after it
