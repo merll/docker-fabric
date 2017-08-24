@@ -158,7 +158,7 @@ def list_networks(full_ids=False):
 @task
 def cleanup_containers(**kwargs):
     """
-    Removes all containers that have finished running.
+    Removes all containers that have finished running. Similar to the ``prune`` functionality in newer Docker versions.
     """
     containers = docker_fabric().cleanup_containers(**kwargs)
     if kwargs.get('list_only'):
@@ -170,7 +170,8 @@ def cleanup_containers(**kwargs):
 @task
 def cleanup_images(remove_old=False, **kwargs):
     """
-    Removes all images that have no name, and that are not references as dependency by any other named image.
+    Removes all images that have no name, and that are not references as dependency by any other named image. Similar
+    to the ``prune`` functionality in newer Docker versions, but supports more filters.
 
     :param remove_old: Also remove images that do have a name, but no `latest` tag.
     :type remove_old: bool
