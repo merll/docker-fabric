@@ -16,6 +16,7 @@ from .utils.output import stdout_result
 
 IMAGE_COLUMNS = ('Id', 'RepoTags', 'ParentId', 'Created', 'VirtualSize', 'Size')
 CONTAINER_COLUMNS = ('Id', 'Names', 'Image', 'Command', 'Ports', 'Status', 'Created')
+NETWORK_COLUMNS = ('Id', 'Name', 'Driver', 'Scope')
 
 
 def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, short_image=False):
@@ -140,6 +141,18 @@ def list_containers(list_all=True, short_image=True, full_ids=False, full_cmd=Fa
     """
     containers = docker_fabric().containers(all=list_all)
     _format_output_table(containers, CONTAINER_COLUMNS, full_ids, full_cmd, short_image)
+
+
+@task
+def list_networks(full_ids=False):
+    """
+    Lists networks on the Docker remote host, similar to ``docker network ls``.
+
+    :param full_ids: Shows the full network ids. When ``False`` (default) only shows the first 12 characters.
+    :type full_ids: bool
+    """
+    networks = docker_fabric().networks()
+    _format_output_table(networks, NETWORK_COLUMNS, full_ids)
 
 
 @task
