@@ -175,8 +175,10 @@ def cleanup_images(remove_old=False, **kwargs):
     :param remove_old: Also remove images that do have a name, but no `latest` tag.
     :type remove_old: bool
     """
-    keep_tags = kwargs.get('keep_tags', env.get('docker_keep_tags'))
-    removed_images = docker_fabric().cleanup_images(remove_old=remove_old, keep_tags=keep_tags, **kwargs)
+    keep_tags = env.get('docker_keep_tags')
+    if keep_tags is not None:
+        kwargs.setdefault('keep_tags', keep_tags)
+    removed_images = docker_fabric().cleanup_images(remove_old=remove_old, **kwargs)
     if kwargs.get('list_only'):
         puts('Unused images:')
         for image_name in removed_images:
