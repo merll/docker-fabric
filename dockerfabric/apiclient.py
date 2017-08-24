@@ -312,6 +312,22 @@ class DockerFabricClient(DockerClientWrapper):
         self.push_log("Waiting for container '{0}'.".format(container))
         super(DockerFabricClient, self).wait(container, **kwargs)
 
+    def create_network(self, name, **kwargs):
+        self.push_log("Creating network '{0}'.".format(name))
+        return super(DockerFabricClient, self).create_network(name, **kwargs)
+
+    def remove_network(self, net_id, **kwargs):
+        self.push_log("Removing network '{0}'.".format(net_id))
+        super(DockerFabricClient, self).remove_network(net_id, **kwargs)
+
+    def connect_container_to_network(self, container, net_id, **kwargs):
+        self.push_log("Connecting container '{0}' to network '{1}'.".format(container, net_id))
+        super(DockerFabricClient, self).connect_container_to_network(container, net_id, **kwargs)
+
+    def disconnect_container_from_network(self, container, net_id, **kwargs):
+        self.push_log("Disconnecting container '{0}' from network '{1}'.".format(container, net_id))
+        super(DockerFabricClient, self).disconnect_container_from_network(container, net_id, **kwargs)
+
     def run_cmd(self, command):
         sudo(command)
 

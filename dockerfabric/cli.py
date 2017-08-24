@@ -9,7 +9,7 @@ from fabric.network import needs_host
 
 from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
-                                  parse_images_output, parse_version_output, parse_top_output)
+                                  parse_images_output, parse_version_output, parse_top_output, parse_networks_output)
 from dockermap.client.docker_util import DockerUtilityMixin
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
@@ -101,7 +101,7 @@ class DockerCliClient(DockerUtilityMixin):
     def inspect_container(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('inspect_container', *args, **kwargs)
         res = self._call(cmd_str, quiet=True)
-        return parse_inspect_output(res)
+        return parse_inspect_output(res, 'container')
 
     def images(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('images', *args, **kwargs)
@@ -117,6 +117,32 @@ class DockerCliClient(DockerUtilityMixin):
         repo_tag = '{0}:{1}'.format(repository, tag) if tag else repository
         cmd_str = self._out.get_cmd('push', repo_tag, **kwargs)
         self._call(cmd_str)
+
+    def create_network(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('create_network', *args, **kwargs)
+        return {'Id': self._call(cmd_str)}
+
+    def remove_network(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('remove_network', *args, **kwargs)
+        self._call(cmd_str)
+
+    def connect_container_to_network(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('connect_container_to_network', *args, **kwargs)
+        self._call(cmd_str)
+
+    def disconnect_container_from_network(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('disconnect_container_from_network', *args, **kwargs)
+        self._call(cmd_str)
+
+    def networks(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('networks', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_networks_output(res)
+
+    def inspect_network(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('inspect_network', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_inspect_output(res, 'network')
 
     def exec_create(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('exec_create', *args, **kwargs)
