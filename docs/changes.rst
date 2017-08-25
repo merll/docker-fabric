@@ -2,6 +2,14 @@
 
 Change History
 ==============
+0.5.0b1
+-------
+* Adapted to recent Docker-Map developments, which includes networking support and improved error handling.
+* Dropped setup tasks for Docker and Socat. Socat is included in most Linux distributions, so that the task of compiling
+  it from source was likely not used. Installation instructions for Docker have changed too frequently, and a correct
+  (supported) setup depends strongly on the environment it is installed in, with more aspects than these simple tasks
+  could consider.
+
 0.4.2
 -----
 * Added ``top`` method to CLI client.
