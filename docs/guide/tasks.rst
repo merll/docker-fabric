@@ -76,6 +76,10 @@ The module :mod:`~dockerfabric.actions` contains the following actions:
 * :func:`~dockerfabric.actions.shutdown` - Stops and removes a container and its dependents.
 * :func:`~dockerfabric.actions.update` - Updates a container and its dependencies. Creates and starts containers as
   necessary.
+* :func:`~dockerfabric.actions.kill` - Sends a ``SIGKILL`` signal to a single container. A different signal can be
+  sent by specifying in the keyword argument ``signal``, e.g. ``signal=SIGHUP``.
+* :func:`~dockerfabric.actions.pull_images` - Pulls the image of the specified container if it is absent, and all of
+  its dependency container images.
 * :func:`~dockerfabric.actions.script` - Uploads and runs a script inside a container, which is created specifically
   for that purpose, along with its dependencies. The container is removed after the script has completed.
 * :func:`~dockerfabric.actions.single_cmd` - Similar to :func:`~dockerfabric.actions.script`, but not uploading
