@@ -22,7 +22,7 @@ setup(
     name='docker-fabric',
     version=__version__,
     packages=find_packages(),
-    install_requires=['six', 'Fabric>=1.8.0', 'docker-py>=1.9.0', 'docker-map>=0.8.0'],
+    install_requires=['six', 'Fabric>=1.8.0', 'docker-py>=1.9.0', 'docker-map>=0.8.0b2'],
     extras_require={
         'yaml': ['PyYAML'],
     },

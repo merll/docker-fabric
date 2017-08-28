@@ -2,6 +2,10 @@
 
 Change History
 ==============
+0.5.0b2
+-------
+* Fixed setup (requirements).
+
 0.5.0b1
 -------
 * Adapted to recent Docker-Map developments, which includes networking support and improved error handling.
