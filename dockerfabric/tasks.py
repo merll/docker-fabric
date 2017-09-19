@@ -17,6 +17,7 @@ from .utils.output import stdout_result
 IMAGE_COLUMNS = ('Id', 'RepoTags', 'ParentId', 'Created', 'VirtualSize', 'Size')
 CONTAINER_COLUMNS = ('Id', 'Names', 'Image', 'Command', 'Ports', 'Status', 'Created')
 NETWORK_COLUMNS = ('Id', 'Name', 'Driver', 'Scope')
+VOLUME_COLUMNS = ('Name', 'Driver')
 
 
 def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, short_image=False):
@@ -153,6 +154,15 @@ def list_networks(full_ids=False):
     """
     networks = docker_fabric().networks()
     _format_output_table(networks, NETWORK_COLUMNS, full_ids)
+
+
+@task
+def list_volumes():
+    """
+    Lists volumes on the Docker remote host, similar to ``docker volume ls``.
+    """
+    volumes = docker_fabric().volumes()
+    _format_output_table(volumes, VOLUME_COLUMNS)
 
 
 @task
