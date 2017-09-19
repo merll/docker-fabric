@@ -328,6 +328,14 @@ class DockerFabricClient(DockerClientWrapper):
         self.push_log("Disconnecting container '{0}' from network '{1}'.".format(container, net_id))
         super(DockerFabricClient, self).disconnect_container_from_network(container, net_id, **kwargs)
 
+    def create_volume(self, name, **kwargs):
+        self.push_log("Creating volume '{0}'.".format(name))
+        super(DockerFabricClient, self).create_volume(name, **kwargs)
+
+    def remove_volume(self, name, **kwargs):
+        self.push_log("Removing volume '{0}'.".format(name))
+        super(DockerFabricClient, self).remove_volume(name, **kwargs)
+
     def run_cmd(self, command):
         sudo(command)
 

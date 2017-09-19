@@ -9,7 +9,8 @@ from fabric.network import needs_host
 
 from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
-                                  parse_images_output, parse_version_output, parse_top_output, parse_networks_output)
+                                  parse_images_output, parse_version_output, parse_top_output, parse_networks_output,
+                                  parse_volumes_output)
 from dockermap.client.docker_util import DockerUtilityMixin
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
@@ -143,6 +144,24 @@ class DockerCliClient(DockerUtilityMixin):
         cmd_str = self._out.get_cmd('inspect_network', *args, **kwargs)
         res = self._call(cmd_str, quiet=True)
         return parse_inspect_output(res, 'network')
+
+    def create_volume(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('create_volume', *args, **kwargs)
+        return {'Name': self._call(cmd_str)}
+
+    def remove_volume(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('remove_volume', *args, **kwargs)
+        self._call(cmd_str)
+
+    def volumes(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('volumes', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_volumes_output(res)
+
+    def inspect_volume(self, *args, **kwargs):
+        cmd_str = self._out.get_cmd('inspect_volume', *args, **kwargs)
+        res = self._call(cmd_str, quiet=True)
+        return parse_inspect_output(res, 'volume')
 
     def exec_create(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('exec_create', *args, **kwargs)
