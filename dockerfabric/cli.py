@@ -156,7 +156,7 @@ class DockerCliClient(DockerUtilityMixin):
     def volumes(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('volumes', *args, **kwargs)
         res = self._call(cmd_str, quiet=True)
-        return parse_volumes_output(res)
+        return {'Volumes': parse_volumes_output(res), 'Warnings': None}
 
     def inspect_volume(self, *args, **kwargs):
         cmd_str = self._out.get_cmd('inspect_volume', *args, **kwargs)

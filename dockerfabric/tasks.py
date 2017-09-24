@@ -161,7 +161,7 @@ def list_volumes():
     """
     Lists volumes on the Docker remote host, similar to ``docker volume ls``.
     """
-    volumes = docker_fabric().volumes()
+    volumes = docker_fabric().volumes()['Volumes'] or ()
     _format_output_table(volumes, VOLUME_COLUMNS)
 
 
