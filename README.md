@@ -66,10 +66,6 @@ the remote service, e.g. via SSH.
 Additionally the following tasks are included in this package, that can be run by Fabric
 directly:
 
-* `install_docker`: Install Docker on a remote machine (to be adapted to more
-  distributions). Uses the latest released version for Ubuntu.
-* `build_socat`: Download and install the tool `socat`. This is used to build a tunneled
-  access to a remote Docker, if it is only accessible through a local socket.
 * `check_version`: Returns version information of the remote Docker service and provides
   useful insight if permissions are set up properly.
 * `cleanup_containers`: Removes all containers that have stopped.
@@ -83,5 +79,4 @@ Contributions
 Thanks to [lfasnacht](https://github.com/lfasnacht) for publishing an implementation for
 a local tunnel to a Fabric client in the [pull request 939 of Fabric](https://github.com/fabric/fabric/pull/939).
 
-Further contributions are maintained in [CONTRIBUTIONS.md]
-(https://github.com/merll/docker-fabric/blob/master/CONTRIBUTIONS.md) of the project.
+Further contributions are maintained in [CONTRIBUTIONS.md](https://github.com/merll/docker-fabric/blob/master/CONTRIBUTIONS.md) of the project.
