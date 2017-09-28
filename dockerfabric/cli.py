@@ -19,6 +19,13 @@ from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
 
 
+def _find_image_id(output):
+    for line in reversed(output.splitlines()):
+        if line and line.startswith('Successfully built '):
+            return line[19:]  # Remove prefix
+    return None
+
+
 class DockerCliClient(DockerUtilityMixin):
     """
     Docker client for Fabric using the command line interface on a remote host.
@@ -229,9 +236,8 @@ class DockerCliClient(DockerUtilityMixin):
             with settings(warn_only=not raise_on_error):
                 res = self._call(cmd_str)
         if res:
-            last_log = res.splitlines()[-1]
-            if last_log and last_log.startswith('Successfully built '):
-                image_id = last_log[19:]  # Remove prefix
+            image_id = _find_image_id(res)
+            if image_id:
                 self.add_extra_tags(image_id, tag, add_tags, add_latest_tag)
                 return image_id
         return None
