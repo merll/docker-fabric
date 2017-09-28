@@ -2,6 +2,10 @@
 
 Change History
 ==============
+0.5.0b4
+-------
+* Fixed image id parsing after successful build.
+
 0.5.0b3
 -------
 * Added new CLI functions and utility task for volumes, as now implemented in Docker-Map 0.8.0b3.
