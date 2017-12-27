@@ -261,6 +261,9 @@ class DockerCliClient(DockerUtilityMixin):
         elif 'ApiVersion' in version_dict:
             self.api_version = version_dict['ApiVersion']
 
+    def run_cmd(self, command):
+        sudo(command)
+
 
 class DockerCliConfig(FabricClientConfiguration):
     init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo', 'debug'
