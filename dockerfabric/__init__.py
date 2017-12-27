@@ -2,4 +2,4 @@
 from __future__ import unicode_literals
 
 
-__version__ = '0.5.0b4'
+__version__ = '0.5.0'

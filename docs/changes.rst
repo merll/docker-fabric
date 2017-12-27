@@ -2,6 +2,10 @@
 
 Change History
 ==============
+0.5.0
+-----
+* Minor addition to CLI client.
+
 0.5.0b4
 -------
 * Fixed image id parsing after successful build.
