@@ -6,6 +6,7 @@ import itertools
 from fabric.api import env, run, runs_once, sudo, task
 from fabric.utils import puts, fastprint
 import six
+from six.moves import map, zip_longest
 
 from dockermap.utils import expand_path
 from . import cli
@@ -41,7 +42,7 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
         if column == 'Image' and short_image:
             __, __, i_name = data.rpartition('/')
             return i_name,
-        return unicode(data),
+        return six.text_type(data),
 
     def _max_len(col_data):
         if col_data:
@@ -54,7 +55,7 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
     col_lens = map(max, (map(_max_len, c) for c in zip(*rows)))
     row_format = '  '.join('{{{0}:{1}}}'.format(i, l) for i, l in enumerate(col_lens))
     for row in rows:
-        for c in itertools.izip_longest(*row, fillvalue=''):
+        for c in zip_longest(*row, fillvalue=''):
             fastprint(row_format.format(*c), end='\n', flush=False)
     fastprint('', flush=True)
 
