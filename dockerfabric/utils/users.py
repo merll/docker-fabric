@@ -13,7 +13,7 @@ def get_group_id(groupname):
     Returns the group id to a given group name. Returns ``None`` if the group does not exist.
 
     :param groupname: Group name.
-    :type groupname: unicode
+    :type groupname: unicode | str
     :return: Group id.
     :rtype: int
     """
@@ -26,7 +26,7 @@ def get_user_id(username):
     Returns the user id to a given user name. Returns ``None`` if the user does not exist.
 
     :param username: User name.
-    :type username: unicode
+    :type username: unicode | str
     :return: User id.
     :rtype: int
     """
@@ -40,7 +40,7 @@ def get_user_groups(username):
     Returns ``None`` if the user does not exist.
 
     :param username: User name.
-    :type username: unicode
+    :type username: unicode | str
     :return: Group names.
     :rtype: list
     """
@@ -55,9 +55,9 @@ def create_group(groupname, gid, system=True):
     Creates a new user group with a specific id.
 
     :param groupname: Group name.
-    :type groupname: unicode
+    :type groupname: unicode | str
     :param gid: Group id.
-    :type gid: int or unicode
+    :type gid: int | unicode | str
     :param system: Creates a system group.
     """
     sudo(addgroup(groupname, gid, system))
@@ -68,9 +68,9 @@ def create_user(username, uid, system=False, no_login=True, no_password=False, g
     Creates a new user with a specific id.
 
     :param username: User name.
-    :type username: unicode
+    :type username: unicode | str
     :param uid: User id.
-    :type uid: int or unicode
+    :type uid: int | unicode | str
     :param system: Creates a system user.
     :type system: bool
     :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
@@ -80,7 +80,7 @@ def create_user(username, uid, system=False, no_login=True, no_password=False, g
     :param group: Create a group with the same id.
     :type group: bool
     :param gecos: Provide GECOS info and suppress prompt.
-    :type gecos: unicode
+    :type gecos: unicode | str
     """
     sudo(adduser(username, uid, system, no_login, no_password, group, gecos))
 
@@ -91,9 +91,9 @@ def assign_user_groups(username, groupnames):
     assignments.
 
     :param username: User name.
-    :type username: unicode
+    :type username: unicode | str
     :param groupnames: Group names.
-    :type groupnames: iterable
+    :type groupnames: collections.Iterable[unicode | str]
     """
     sudo(assignuser(username, groupnames))
 
@@ -103,9 +103,9 @@ def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
     Returns the id for the given group, and creates it first in case it does not exist.
 
     :param groupname: Group name.
-    :type groupname: unicode
+    :type groupname: unicode | str
     :param gid_preset: Group id to set if a new group is created.
-    :type gid_preset: int or unicode
+    :type gid_preset: int | unicode | str
     :param system: Create a system group.
     :type system: bool
     :param id_dependent: If the group exists, but its id does not match `gid_preset`, an error is thrown.
@@ -129,12 +129,12 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_pas
     as well.
 
     :param username: User name.
-    :type username: unicode
+    :type username: unicode | str
     :param uid_preset: User id to set in case a new user is created.
-    :type uid_preset: int or unicode
+    :type uid_preset: int | unicode | str
     :param groupnames: Additional names of groups to assign the user to. If the user exists, these will be appended to
       existing group assignments.
-    :type groupnames: iterable
+    :type groupnames: collections.Iterable[unicode | str]
     :param system: Create a system user.
     :type system: bool
     :param no_login: Disallow login of this user and group, and skip creating the home directory. Default is ``True``.
@@ -142,7 +142,7 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_pas
     :param no_password: Do not set a password for the new user.
     :type: no_password: bool
     :param gecos: Provide GECOS info and suppress prompt.
-    :type gecos: unicode
+    :type gecos: unicode | str
     :param id_dependent: If the user exists, but its id does not match `uid_preset`, an error is thrown.
     :type id_dependent: bool
     :return:

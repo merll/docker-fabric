@@ -51,7 +51,7 @@ def load_clients(stream):
     :param stream: YAML stream.
     :type stream: file
     :return: A dictionary of client configuration objects.
-    :rtype: dict[unicode, dockerfabric.apiclient.DockerClientConfiguration]
+    :rtype: dict[unicode | str, dockerfabric.apiclient.DockerClientConfiguration]
     """
     return _load_clients(stream, configuration_class=DockerClientConfiguration)
 
@@ -61,9 +61,9 @@ def load_clients_file(filename):
     Loads client configurations from a YAML file.
 
     :param filename: YAML file name.
-    :type filename: unicode
+    :type filename: unicode | str
     :return: A dictionary of client configuration objects.
-    :rtype: dict[unicode, dockerfabric.apiclient.DockerClientConfiguration]
+    :rtype: dict[unicode | str, dockerfabric.apiclient.DockerClientConfiguration]
     """
     return _load_clients_file(filename, configuration_class=DockerClientConfiguration)
 

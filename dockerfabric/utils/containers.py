@@ -13,15 +13,15 @@ def temp_container(image, no_op_cmd='/bin/true', create_kwargs=None, start_kwarg
     container to finish before copying resources.
 
     :param image: Image name or id to create the container from.
-    :type image: unicode
+    :type image: unicode | str
     :param no_op_cmd: Dummy-command to run, only for being able to access the container.
-    :type no_op_cmd: unicode
+    :type no_op_cmd: unicode | str
     :param create_kwargs: Additional kwargs for creating the container. The ``entrypoint`` will be set to ``no_op_cmd``.
     :type create_kwargs: dict
     :param start_kwargs: Additional kwargs for starting the container. ``restart_policy`` will be set to ``None``.
     :type start_kwargs: dict
     :return: Id of the temporary container.
-    :rtype: unicode
+    :rtype: unicode | str
     """
     df = docker_fabric()
     create_kwargs = create_kwargs.copy() if create_kwargs else dict()

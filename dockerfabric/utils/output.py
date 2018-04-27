@@ -12,7 +12,7 @@ def stdout_result(cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
     be suppressed.
 
     :param cmd: Command to run.
-    :type cmd: unicode
+    :type cmd: unicode | str
     :param expected_errors: If the return code is non-zero, but found in this tuple, it will be ignored. ``None`` is
       returned in this case.
     :type expected_errors: tuple
@@ -23,7 +23,7 @@ def stdout_result(cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
     :param quiet: If set to ``True``, does not show any output.
     :type quiet: bool
     :return: The result of the command as would be written to `stdout`.
-    :rtype: unicode
+    :rtype: unicode | str
     """
     which = operations.sudo if sudo else operations.run
     with hide('warnings'):
@@ -42,7 +42,7 @@ def check_int(value):
     raising a :class:`TypeError`. ``None`` is not converted but returns ``None`` instead.
 
     :param value: Value to test for conversion.
-    :type value: unicode
+    :type value: unicode | str
     :return: Integer value.
     :rtype: int
     """
@@ -63,7 +63,7 @@ def single_line_stdout(cmd, expected_errors=(), shell=True, sudo=False, quiet=Fa
     The output itself can be suppressed.
 
     :param cmd: Command to run.
-    :type cmd: unicode
+    :type cmd: unicode | str
     :param expected_errors: If the return code is non-zero, but found in this tuple, it will be ignored. ``None`` is
       returned in this case.
     :type expected_errors: tuple
@@ -74,6 +74,6 @@ def single_line_stdout(cmd, expected_errors=(), shell=True, sudo=False, quiet=Fa
     :param quiet: If set to ``True``, does not show any output.
     :type quiet: bool
     :return: The result of the command as would be written to `stdout`.
-    :rtype: unicode
+    :rtype: unicode | str
     """
     return single_line(stdout_result(cmd, expected_errors, shell, sudo, quiet))

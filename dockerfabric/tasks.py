@@ -95,7 +95,7 @@ def get_ip(interface_name='docker0'):
     Shows the IP4 address of a network interface.
 
     :param interface_name: Name of the network interface. Default is ``docker0``.
-    :type interface_name: unicode
+    :type interface_name: unicode | str
     """
     puts(get_ip4_address(interface_name))
 
@@ -106,7 +106,7 @@ def get_ipv6(interface_name='docker0', expand=False):
     Shows the IP6 address of a network interface.
 
     :param interface_name: Name of the network interface. Default is ``docker0``.
-    :type interface_name: unicode
+    :type interface_name: unicode | str
     :param expand: Expand the abbreviated IP6 address. Default is ``False``.
     :type expand: bool
     """
@@ -218,10 +218,10 @@ def save_image(image, filename=None):
     on the host, generates a gzip-tarball and downloads that.
 
     :param image: Image name or id.
-    :type image: unicode
+    :type image: unicode | str
     :param filename: File name to store the local file. If not provided, will use ``<image>.tar.gz`` in the current
       working directory.
-    :type filename: unicode
+    :type filename: unicode | str
     """
     local_name = filename or '{0}.tar.gz'.format(image)
     cli.save_image(image, local_name)
@@ -234,7 +234,7 @@ def load_image(filename, timeout=120):
     period.
 
     :param filename: Local file name.
-    :type filename: unicode
+    :type filename: unicode | str
     :param timeout: Timeout in seconds to set temporarily for the upload.
     :type timeout: int
     """

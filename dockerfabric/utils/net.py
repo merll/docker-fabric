@@ -37,9 +37,9 @@ def get_ip4_address(interface_name):
     Extracts the IPv4 address for a particular interface from `ifconfig`.
 
     :param interface_name: Name of the network interface (e.g. ``eth0``).
-    :type interface_name: unicode
+    :type interface_name: unicode | str
     :return: IPv4 address; ``None`` if the interface is present but no address could be extracted.
-    :rtype: unicode
+    :rtype: unicode | str
     """
     return _get_address(interface_name, IP4_PATTERN)
 
@@ -49,11 +49,11 @@ def get_ip6_address(interface_name, expand=False):
     Extracts the IPv6 address for a particular interface from `ifconfig`.
 
     :param interface_name: Name of the network interface (e.g. ``eth0``).
-    :type interface_name: unicode
+    :type interface_name: unicode | str
     :param expand: If set to ``True``, an abbreviated address is expanded to the full address.
     :type expand: bool
     :return: IPv6 address; ``None`` if the interface is present but no address could be extracted.
-    :rtype: unicode
+    :rtype: unicode | str
     """
     address = _get_address(interface_name, IP6_PATTERN)
     if address and expand:

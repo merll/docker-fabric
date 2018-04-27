@@ -81,7 +81,7 @@ class LocalTunnel(object):
     :param remote_port: Remote port to forward connections to.
     :type remote_port: int
     :param remote_host: Host to connect to. Optional, default is ``localhost``.
-    :type remote_host: unicode
+    :type remote_host: unicode | str
     :param bind_port: Local port to bind to. Optional, default is same as ``remote_port``.
     :type bind_port: int
     :param bind_host: Local address to bind to. Optional, default is ``localhost``.

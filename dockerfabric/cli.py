@@ -31,12 +31,12 @@ class DockerCliClient(DockerUtilityMixin):
     Docker client for Fabric using the command line interface on a remote host.
 
     :param cmd_prefix: Custom prefix to prepend to the Docker command line.
-    :type cmd_prefix: unicode
+    :type cmd_prefix: unicode | str
     :param default_bin: Docker binary to use. If not set, uses ``docker``.
-    :type default_bin: unicode
+    :type default_bin: unicode | str
     :param base_url: URL to connect to; if not set, will refer to ``env.docker_base_url`` or use ``None``, which by
      default attempts a connection on a Unix socket at ``/var/run/docker.sock``.
-    :type base_url: unicode
+    :type base_url: unicode | str
     :param tls: Whether to use TLS on the connection to the Docker service.
     :type tls: bool
     :param use_sudo: Whether to use ``sudo`` when performing Docker commands.
@@ -292,11 +292,11 @@ def copy_resource(container, resource, local_filename, contents_only=True):
     Copies a resource from a container to a compressed tarball and downloads it.
 
     :param container: Container name or id.
-    :type container: unicode
+    :type container: unicode | str
     :param resource: Name of resource to copy.
-    :type resource: unicode
+    :type resource: unicode | str
     :param local_filename: Path to store the tarball locally.
-    :type local_filename: unicode
+    :type local_filename: unicode | str
     :param contents_only: In case ``resource`` is a directory, put all contents at the root of the tar file. If this is
       set to ``False``, the directory itself will be at the root instead.
     :type contents_only: bool
@@ -328,21 +328,21 @@ def copy_resources(src_container, src_resources, storage_dir, dst_directories=No
     compressed to a tarball, and they are left on the remote machine.
 
     :param src_container: Container name or id.
-    :type src_container: unicode
+    :type src_container: unicode | str
     :param src_resources: Resources, as (file or directory) names to copy.
-    :type src_resources: iterable
+    :type src_resources: collections.Iterable[unicode | str]
     :param storage_dir: Remote directory to store the copied objects in.
-    :type storage_dir: unicode
+    :type storage_dir: unicode | str
     :param dst_directories: Optional dictionary of destination directories, in the format ``resource: destination``. If
       not set, resources will be in the same relative structure to one another as inside the container. For setting a
       common default, use ``*`` as the resource key.
-    :type dst_directories: dict
+    :type dst_directories: dict[unicode | str, unicode | str]
     :param apply_chown: Owner to set for the copied resources. Can be a user name or id, group name or id, both in the
       notation ``user:group``, or as a tuple ``(user, group)``.
-    :type apply_chown: unicode or tuple
+    :type apply_chown: unicode | str | tuple
     :param apply_chmod: File system permissions to set for the copied resources. Can be any notation as accepted by
       `chmod`.
-    :type apply_chmod: unicode
+    :type apply_chmod: unicode | str
     """
     def _copy_resource(resource):
         default_dest_path = generic_path if generic_path is not None else resource
@@ -369,12 +369,12 @@ def isolate_and_get(src_container, src_resources, local_dst_dir, **kwargs):
     and downloads it.
 
     :param src_container: Container name or id.
-    :type src_container: unicode
+    :type src_container: unicode | str
     :param src_resources: Resources, as (file or directory) names to copy.
-    :type src_resources: iterable
+    :type src_resources: collections.Iterable[unicode | str]
     :param local_dst_dir: Local directory to store the compressed tarball in. Can also be a file name; the default file
       name is ``container_<container name>.tar.gz``.
-    :type local_dst_dir: unicode
+    :type local_dst_dir: unicode | str
     :param kwargs: Additional kwargs for :func:`copy_resources`.
     """
     with temp_dir() as remote_tmp:
@@ -393,11 +393,11 @@ def isolate_to_image(src_container, src_resources, dst_image, **kwargs):
     (otherwise empty) Docker image.
 
     :param src_container: Container name or id.
-    :type src_container: unicode
+    :type src_container: unicode | str
     :param src_resources: Resources, as (file or directory) names to copy.
-    :type src_resources: iterable
+    :type src_resources: collections.Iterable[unicode | str]
     :param dst_image: Tag for the new image.
-    :type dst_image: unicode
+    :type dst_image: unicode | str
     :param kwargs: Additional kwargs for :func:`copy_resources`.
     """
     with temp_dir() as remote_tmp:
@@ -413,7 +413,7 @@ def save_image(image, local_filename):
     Remove API method is too slow.
 
     :param image: Image id or tag.
-    :type image: unicode
+    :type image: unicode | str
     :param local_filename: Local file name to store the image into. If this is a directory, the image will be stored
       there as a file named ``image_<Image name>.tar.gz``.
     """
@@ -433,11 +433,11 @@ def flatten_image(image, dest_image=None, no_op_cmd='/bin/true', create_kwargs={
     non-operational command, such as ``/bin/true``. The container is removed once the new image has been created.
 
     :param image: Image id or tag.
-    :type image: unicode
+    :type image: unicode | str
     :param dest_image: Tag for the new image.
-    :type dest_image: unicode
+    :type dest_image: unicode | str
     :param no_op_cmd: Dummy command for starting temporary container.
-    :type no_op_cmd: unicode
+    :type no_op_cmd: unicode | str
     :param create_kwargs: Optional additional kwargs for creating the temporary container.
     :type create_kwargs: dict
     :param start_kwargs: Optional additional kwargs for starting the temporary container.

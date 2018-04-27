@@ -73,12 +73,12 @@ class DockerFabricClient(DockerClientWrapper):
 
     :param base_url: URL to connect to; if not set, will refer to ``env.docker_base_url`` or use ``None``, which by
      default attempts a connection on a Unix socket at ``/var/run/docker.sock``.
-    :type base_url: unicode
+    :type base_url: unicode | str
     :param tls: Whether to use TLS on the connection to the Docker service.
     :type tls: bool
     :param version: API version; if not set, will try to use ``env.docker_api_version``; otherwise defaults to
      :const:`~docker.constants.DEFAULT_DOCKER_API_VERSION`.
-    :type version: unicode
+    :type version: unicode | str
     :param timeout: Client timeout for Docker; if not set, will try to use ``env.docker_timeout``; otherwise defaults to
      :const:`~docker.constants.DEFAULT_TIMEOUT_SECONDS`.
     :type timeout: int
@@ -108,7 +108,7 @@ class DockerFabricClient(DockerClientWrapper):
         Prints the log as usual for fabric output, enhanced with the prefix "docker".
 
         :param info: Log output.
-        :type info: unicode
+        :type info: unicode | str
         :param level: Logging level. Has no effect here.
         :type level: int
         """
@@ -126,11 +126,11 @@ class DockerFabricClient(DockerClientWrapper):
         Prints progress information.
 
         :param status: Status text.
-        :type status: unicode
+        :type status: unicode | str
         :param object_id: Object that the progress is reported on.
-        :type object_id: unicode
+        :type object_id: unicode | str
         :param progress: Progress bar.
-        :type progress: unicode
+        :type progress: unicode | str
         """
         fastprint(progress_fmt(status, object_id, progress), end='\n')
 

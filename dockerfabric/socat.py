@@ -42,7 +42,7 @@ class SocketTunnel(LocalTunnel):
     traffic between the remote-end `stdout` and a Unix socket.
 
     :param remote_socket: Unix socket to connect to on the remote machine.
-    :type remote_socket: unicode
+    :type remote_socket: unicode | str
     :param local_port: Local TCP port to use for the tunnel.
     :type local_port: int
     :param quiet: If set to ``False``, the **socat** command line on the SSH channel will be written to `stdout`.
