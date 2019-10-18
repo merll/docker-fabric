@@ -2,11 +2,10 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
-import itertools
 from fabric.api import env, run, runs_once, sudo, task
 from fabric.utils import puts, fastprint
 import six
-from six.moves import map, zip_longest
+from six.moves import map, zip, zip_longest
 
 from dockermap.utils import expand_path
 from . import cli
@@ -40,8 +39,7 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
         if column == 'Command' and not full_cmd:
             return data[:25],
         if column == 'Image' and short_image:
-            __, __, i_name = data.rpartition('/')
-            return i_name,
+            return data.rpartition('/')[2],
         return six.text_type(data),
 
     def _max_len(col_data):

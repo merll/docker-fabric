@@ -4,8 +4,10 @@ from __future__ import unicode_literals
 import os
 import posixpath
 
-from fabric.api import get, put, puts, task
+import yaml
+from fabric.api import get, put, puts, task, fastprint
 from fabric.utils import error
+from six import iteritems
 
 from dockermap.map.action import ContainerUtilAction
 from .apiclient import container_fabric
@@ -193,3 +195,14 @@ def single_cmd(container, command, fail_nonzero=False, download_result=None, **k
             puts(res['log'])
         else:
             error(res['log'])
+
+
+@task
+def show(map_name=None):
+    all_maps = container_fabric().maps
+    if map_name:
+        data = all_maps[map_name].as_dict()
+    else:
+        data = {k: v.as_dict()
+                for k, v in iteritems(all_maps)}
+    fastprint(yaml.safe_dump(data, default_flow_style=False, canonical=False))
