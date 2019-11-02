@@ -122,7 +122,7 @@ def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
     return gid
 
 
-def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_password=False, no_login=True,
+def get_or_create_user(username, uid_preset, groupnames=None, system=False, no_password=False, no_login=True,
                        gecos=None, id_dependent=True):
     """
     Returns the id of the given user name, and creates it first in case it does not exist. A default group is created
@@ -162,7 +162,7 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_pas
     elif id_dependent and uid != uid_preset:
         error("Present user id '{0}' does not match the required id of the environment '{1}'.".format(uid, uid_preset))
     current_groups = get_user_groups(username)
-    new_groups = set(groupnames).discard(tuple(current_groups))
+    new_groups = set(groupnames or ()) - set(current_groups or ())
     if new_groups:
         assign_user_groups(username, new_groups)
     return uid

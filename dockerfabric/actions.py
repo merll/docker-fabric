@@ -161,7 +161,7 @@ def script(container, script_path, fail_nonzero=False, upload_dir=False, **kwarg
             put(script_path, remote_script, mirror_local_mode=True)
         results = [output.result
                    for output in container_fabric().run_script(container, script_path=remote_script, **kwargs)
-                   if o.action_type == ContainerUtilAction.SCRIPT]
+                   if output.action_type == ContainerUtilAction.SCRIPT]
     for res in results:
         puts("Exit code: {0}".format(res['exit_code']))
         if res['exit_code'] == 0 or not fail_nonzero:
@@ -186,7 +186,7 @@ def single_cmd(container, command, fail_nonzero=False, download_result=None, **k
         kwargs.setdefault('command_format', ['-c', command])
         results = [output.result
                    for output in container_fabric().run_script(container, script_path=remote_tmp, **kwargs)
-                   if o.action_type == ContainerUtilAction.SCRIPT]
+                   if output.action_type == ContainerUtilAction.SCRIPT]
         if download_result:
             get(posixpath.join(remote_tmp, '*'), local_path=download_result)
     for res in results:
