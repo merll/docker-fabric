@@ -76,7 +76,4 @@ directly:
 
 Contributions
 =============
-Thanks to [lfasnacht](https://github.com/lfasnacht) for publishing an implementation for
-a local tunnel to a Fabric client in the [pull request 939 of Fabric](https://github.com/fabric/fabric/pull/939).
-
-Further contributions are maintained in [CONTRIBUTIONS.md](https://github.com/merll/docker-fabric/blob/master/CONTRIBUTIONS.md) of the project.
+Contributions are maintained in [CONTRIBUTIONS.md](https://github.com/merll/docker-fabric/blob/master/CONTRIBUTIONS.md) of the project.
