@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric.context_managers import documented_contextmanager
-from dockerfabric.apiclient import docker_fabric
+from contextlib import contextmanager
+
+from ..apiclient import ContainerApiFabricClient
 
 
-@documented_contextmanager
-def temp_container(image, no_op_cmd='/bin/true', create_kwargs=None, start_kwargs=None):
+@contextmanager
+def temp_container(c, image, no_op_cmd='/bin/true', create_kwargs=None, start_kwargs=None):
     """
     Creates a temporary container, which can be used e.g. for copying resources. The container is removed once it
     is no longer needed. Note that ``no_op_cmd`` needs to be set appropriately, since the method will wait for the
     container to finish before copying resources.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param image: Image name or id to create the container from.
     :type image: unicode | str
     :param no_op_cmd: Dummy-command to run, only for being able to access the container.
@@ -23,7 +26,7 @@ def temp_container(image, no_op_cmd='/bin/true', create_kwargs=None, start_kwarg
     :return: Id of the temporary container.
     :rtype: unicode | str
     """
-    df = docker_fabric()
+    df = ContainerApiFabricClient(c)
     create_kwargs = create_kwargs.copy() if create_kwargs else dict()
     start_kwargs = start_kwargs.copy() if start_kwargs else dict()
     create_kwargs.update(entrypoint=no_op_cmd)

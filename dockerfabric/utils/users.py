@@ -1,72 +1,81 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric.api import sudo
-from fabric.utils import error
+from invoke import Exit
 
 from dockermap.shortcuts import addgroup, adduser, assignuser
 from .output import single_line_stdout, check_int
 
 
-def get_group_id(groupname):
+def get_group_id(c, groupname):
     """
     Returns the group id to a given group name. Returns ``None`` if the group does not exist.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param groupname: Group name.
     :type groupname: unicode | str
     :return: Group id.
     :rtype: int
     """
-    gid = single_line_stdout('id -g {0}'.format(groupname), expected_errors=(1,), shell=False)
+    gid = single_line_stdout(c, 'id -g {0}'.format(groupname), expected_errors=(1,), shell=False)
     return check_int(gid)
 
 
-def get_user_id(username):
+def get_user_id(c, username):
     """
     Returns the user id to a given user name. Returns ``None`` if the user does not exist.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param username: User name.
     :type username: unicode | str
     :return: User id.
     :rtype: int
     """
-    uid = single_line_stdout('id -u {0}'.format(username), expected_errors=(1,), shell=False)
+    uid = single_line_stdout(c, 'id -u {0}'.format(username), expected_errors=(1,), shell=False)
     return check_int(uid)
 
 
-def get_user_groups(username):
+def get_user_groups(c, username):
     """
     Returns the list if group names for a given user name, omitting the default group.
     Returns ``None`` if the user does not exist.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param username: User name.
     :type username: unicode | str
     :return: Group names.
     :rtype: list
     """
-    out = single_line_stdout('groups {0}'.format(username))
+    out = single_line_stdout(c, 'groups {0}'.format(username))
     if out:
         return out.split()[2:]
     return None
 
 
-def create_group(groupname, gid, system=True):
+def create_group(c, groupname, gid, system=True):
     """
     Creates a new user group with a specific id.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param groupname: Group name.
     :type groupname: unicode | str
     :param gid: Group id.
     :type gid: int | unicode | str
     :param system: Creates a system group.
     """
-    sudo(addgroup(groupname, gid, system))
+    c.sudo(addgroup(groupname, gid, system))
 
 
-def create_user(username, uid, system=False, no_login=True, no_password=False, group=False, gecos=None):
+def create_user(c, username, uid, system=False, no_login=True, no_password=False, group=False, gecos=None):
     """
     Creates a new user with a specific id.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param username: User name.
     :type username: unicode | str
     :param uid: User id.
@@ -82,26 +91,30 @@ def create_user(username, uid, system=False, no_login=True, no_password=False, g
     :param gecos: Provide GECOS info and suppress prompt.
     :type gecos: unicode | str
     """
-    sudo(adduser(username, uid, system, no_login, no_password, group, gecos))
+    c.sudo(adduser(username, uid, system, no_login, no_password, group, gecos))
 
 
-def assign_user_groups(username, groupnames):
+def assign_user_groups(c, username, groupnames):
     """
     Assigns a user to a set of groups. User and group need to exists. The new groups are appended to existing group
     assignments.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param username: User name.
     :type username: unicode | str
     :param groupnames: Group names.
     :type groupnames: collections.Iterable[unicode | str]
     """
-    sudo(assignuser(username, groupnames))
+    c.sudo(assignuser(username, groupnames))
 
 
-def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
+def get_or_create_group(c, groupname, gid_preset, system=False, id_dependent=True):
     """
     Returns the id for the given group, and creates it first in case it does not exist.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param groupname: Group name.
     :type groupname: unicode | str
     :param gid_preset: Group id to set if a new group is created.
@@ -113,21 +126,23 @@ def get_or_create_group(groupname, gid_preset, system=False, id_dependent=True):
     :return: Group id of the existing or new group.
     :rtype: int
     """
-    gid = get_group_id(groupname)
+    gid = get_group_id(c, groupname)
     if gid is None:
-        create_group(groupname, gid_preset, system)
+        create_group(c, groupname, gid_preset, system)
         return gid_preset
     elif id_dependent and gid != gid_preset:
-        error("Present group id '{0}' does not match the required id of the environment '{1}'.".format(gid, gid_preset))
+        raise Exit("Present group id '{0}' does not match the required id of the environment '{1}'.".format(gid, gid_preset))
     return gid
 
 
-def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_password=False, no_login=True,
+def get_or_create_user(c, username, uid_preset, groupnames=None, system=False, no_password=False, no_login=True,
                        gecos=None, id_dependent=True):
     """
     Returns the id of the given user name, and creates it first in case it does not exist. A default group is created
     as well.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param username: User name.
     :type username: unicode | str
     :param uid_preset: User id to set in case a new user is created.
@@ -147,22 +162,22 @@ def get_or_create_user(username, uid_preset, groupnames=[], system=False, no_pas
     :type id_dependent: bool
     :return:
     """
-    uid = get_user_id(username)
-    gid = get_group_id(username)
+    uid = get_user_id(c, username)
+    gid = get_group_id(c, username)
     if id_dependent and gid is not None and gid != uid_preset:
-        error("Present group id '{0}' does not match the required id of the environment '{1}'.".format(gid, uid_preset))
+        raise Exit("Present group id '{0}' does not match the required id of the environment '{1}'.".format(gid, uid_preset))
     if gid is None:
-        create_group(username, uid_preset, system)
+        create_group(c, username, uid_preset, system)
         gid = uid_preset
     if uid is None:
-        create_user(username, gid, system, no_login, no_password, False, gecos)
+        create_user(c, username, gid, system, no_login, no_password, False, gecos)
         if groupnames:
-            assign_user_groups(username, groupnames)
+            assign_user_groups(c, username, groupnames)
         return uid
     elif id_dependent and uid != uid_preset:
-        error("Present user id '{0}' does not match the required id of the environment '{1}'.".format(uid, uid_preset))
-    current_groups = get_user_groups(username)
-    new_groups = set(groupnames).discard(tuple(current_groups))
+        raise Exit("Present user id '{0}' does not match the required id of the environment '{1}'.".format(uid, uid_preset))
+    current_groups = get_user_groups(c, username)
+    new_groups = set(groupnames or ()) - set(current_groups)
     if new_groups:
-        assign_user_groups(username, new_groups)
+        assign_user_groups(c, username, new_groups)
     return uid

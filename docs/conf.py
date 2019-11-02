@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Docker-Fabric documentation build configuration file, created by
 # sphinx-quickstart on Tue Sep  2 07:43:06 2014.

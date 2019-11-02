@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric import operations
-from fabric.context_managers import hide
-from fabric.utils import error
+from invoke import Exit
 
 
-def stdout_result(cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
+def stdout_result(c, cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
     """
     Runs a command and returns the result, that would be written to `stdout`, as a string. The output itself can
     be suppressed.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param cmd: Command to run.
     :type cmd: unicode | str
     :param expected_errors: If the return code is non-zero, but found in this tuple, it will be ignored. ``None`` is
@@ -25,14 +25,17 @@ def stdout_result(cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
     :return: The result of the command as would be written to `stdout`.
     :rtype: unicode | str
     """
-    which = operations.sudo if sudo else operations.run
-    with hide('warnings'):
-        result = which(cmd, shell=shell, quiet=quiet, warn_only=True)
+    which = c.sudo if sudo else c.run
+    if quiet:
+        hide = 'stdout'
+    else:
+        hide = None
+    result = which(cmd, shell=shell, warn=True, hide=hide)
     if result.return_code == 0:
-        return result
+        return result.stdout
 
     if result.return_code not in expected_errors:
-        error("Received unexpected error code {0} while executing!".format(result.return_code))
+        raise Exit("Received unexpected error code {0} while executing!".format(result.return_code))
     return None
 
 
@@ -50,18 +53,20 @@ def check_int(value):
         try:
             return int(value)
         except TypeError:
-            error("Unexpected non-integer value '{0}'.".format(value))
+            raise Exit("Unexpected non-integer value '{0}'.".format(value))
     return None
 
 
 single_line = lambda val: val.split('\n')[0] if val is not None else None
 
 
-def single_line_stdout(cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
+def single_line_stdout(c, cmd, expected_errors=(), shell=True, sudo=False, quiet=False):
     """
     Runs a command and returns the first line of the result, that would be written to `stdout`, as a string.
     The output itself can be suppressed.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param cmd: Command to run.
     :type cmd: unicode | str
     :param expected_errors: If the return code is non-zero, but found in this tuple, it will be ignored. ``None`` is
@@ -76,4 +81,4 @@ def single_line_stdout(cmd, expected_errors=(), shell=True, sudo=False, quiet=Fa
     :return: The result of the command as would be written to `stdout`.
     :rtype: unicode | str
     """
-    return single_line(stdout_result(cmd, expected_errors, shell, sudo, quiet))
+    return single_line(stdout_result(c, cmd, expected_errors, shell, sudo, quiet))

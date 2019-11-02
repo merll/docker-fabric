@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric.api import env, sudo
-from fabric.utils import puts, fastprint, error
+from invoke import Exit
 
 from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
 from dockermap.api import DockerClientWrapper
-from .base import (get_local_port, set_raise_on_error, DockerConnectionDict, FabricClientConfiguration,
-                   FabricContainerClient)
-from .socat import socat_tunnels
-from .tunnel import local_tunnels
+from dockermap.map.config.client import ClientConfiguration
+from .base import get_local_port, FabricContainerClient
+from .socat import SocketTunnel
+from .tunnel import LocalTunnel
 
 
 DEFAULT_TCP_HOST = 'tcp://127.0.0.1'
@@ -24,24 +23,40 @@ def _get_port_number(expr, port_loc):
         raise ValueError("Missing or invalid {0} port ({1}).".format(port_loc, expr))
 
 
-def _get_socat_tunnel(address, local_port):
+def _get_socat_tunnel(connection, address, local_port):
+    config = connection.config.get('docker', {})
     init_local_port = _get_port_number(local_port, 'local')
     tunnel_local_port = get_local_port(init_local_port)
-    socat_tunnel = socat_tunnels[(address, tunnel_local_port)]
+    socat_tunnel = getattr(connection, '_socat_tunnel', None)
+    if not (socat_tunnel and socat_tunnel.connected):
+        socat_tunnel = SocketTunnel(connection, address, tunnel_local_port, config.get('socat_quiet'))
+        setattr(connection, '_socat_tunnel', socat_tunnel)
     return '{0}:{1}'.format(DEFAULT_TCP_HOST, socat_tunnel.bind_port), socat_tunnel
 
 
-def _get_local_tunnel(address, remote_port, local_port):
+def _get_local_tunnel(connection, address, remote_port, local_port):
+    """
+
+    :param connection:
+    :type connection: fabric.connections.Connection
+    :param address:
+    :param remote_port:
+    :param local_port:
+    :return:
+    """
     host_port = address.partition('/')[0]
     host, __, port = host_port.partition(':')
     service_remote_port = _get_port_number(port or remote_port, 'remote')
     init_local_port = _get_port_number(local_port or port or remote_port, 'local')
-    local_tunnel = local_tunnels[(host, service_remote_port, 'localhost', init_local_port)]
+    local_tunnel = getattr(connection, '_local_tunnel')
+    if not (local_tunnel and local_tunnel.connected):
+        local_tunnel = LocalTunnel(connection, service_remote_port, bind_port=init_local_port)
+        setattr(connection, '_local_tunnel', local_tunnel)
     return '{0}:{1}'.format(DEFAULT_TCP_HOST, local_tunnel.bind_port), local_tunnel
 
 
-def _get_connection_args(base_url, remote_port, local_port):
-    if env.host_string:
+def _get_connection_args(connection, base_url, remote_port, local_port):
+    if connection:
         if base_url:
             proto_idx = base_url.find(':/')
             if proto_idx >= 0:
@@ -52,12 +67,12 @@ def _get_connection_args(base_url, remote_port, local_port):
                         address = address[1:]
                     elif address[0] != '/':
                         address = ''.join(('/', address))
-                    return _get_socat_tunnel(address, local_port)
-                return _get_local_tunnel(address.lstrip('/'), remote_port, local_port)
+                    return _get_socat_tunnel(connection, address, local_port)
+                return _get_local_tunnel(connection, address.lstrip('/'), remote_port, local_port)
             elif base_url[0] == '/':
-                return _get_socat_tunnel(base_url, local_port)
-            return _get_local_tunnel(base_url, remote_port, local_port)
-        return _get_socat_tunnel(DEFAULT_SOCKET, local_port)
+                return _get_socat_tunnel(connection, base_url, local_port)
+            return _get_local_tunnel(connection, base_url, remote_port, local_port)
+        return _get_socat_tunnel(connection, DEFAULT_SOCKET, local_port)
     return base_url, None
 
 
@@ -89,19 +104,36 @@ class DockerFabricClient(DockerClientWrapper):
      provided, will try to use ``env.docker_tunnel_local_port``; otherwise defaults to the value of
      ``tunnel_remote_port`` or ``None`` for direct connections without an SSH tunnel.
     :type tunnel_local_port: int
+    :param connection: Fabric SSH connection
+    :type connection: fabric.Connection
     :param kwargs: Additional kwargs for :class:`docker.client.Client`
     """
     def __init__(self, base_url=None, tls=None, version=None, timeout=None, tunnel_remote_port=None,
-                 tunnel_local_port=None, **kwargs):
-        url = base_url or env.get('docker_base_url')
-        use_tls = tls or (tls is None and env.get('docker_tls', False))
-        api_version = version or env.get('docker_api_version')
-        client_timeout = timeout or env.get('docker_timeout')
-        remote_port = tunnel_remote_port or env.get('docker_tunnel_remote_port')
-        local_port = tunnel_local_port or env.get('docker_tunnel_local_port', remote_port)
-        conn_url, self._tunnel = _get_connection_args(url, remote_port, local_port)
+                 tunnel_local_port=None, connection=None, **kwargs):
+        self.connection = connection
+        if connection:
+            connection.open()
+            config = connection.config.get('docker', {})
+        else:
+            config = {}
+        url = base_url or config.get('base_url')
+        use_tls = tls or (tls is None and config.get('tls', False))
+        api_version = version or config.get('api_version')
+        client_timeout = timeout or config.get('timeout')
+        remote_port = tunnel_remote_port or config.get('tunnel_remote_port')
+        local_port = tunnel_local_port or config.get('tunnel_local_port', remote_port)
+        conn_url, self._tunnel = _get_connection_args(connection, url, remote_port, local_port)
+        if self._tunnel:
+            self._tunnel.connect()
         super(DockerFabricClient, self).__init__(base_url=conn_url, version=api_version, timeout=client_timeout,
                                                  tls=use_tls, **kwargs)
+
+    def _set_raise_on_error(self, kwargs, default=True):
+        r = kwargs.get('raise_on_error')
+        if r is None:
+            config = self.connection.config.get('docker', {})
+            raise_on_error = config.get('default_raise_on_error', default)
+            kwargs['raise_on_error'] = raise_on_error
 
     def push_log(self, info, level=None, *args, **kwargs):
         """
@@ -117,9 +149,9 @@ class DockerFabricClient(DockerClientWrapper):
         else:
             msg = info
         try:
-            puts('docker: {0}'.format(msg))
+            print('docker: {0}'.format(msg))
         except UnicodeDecodeError:
-            puts('docker: -- non-printable output --')
+            print('docker: -- non-printable output --')
 
     def push_progress(self, status, object_id, progress):
         """
@@ -132,7 +164,8 @@ class DockerFabricClient(DockerClientWrapper):
         :param progress: Progress bar.
         :type progress: unicode | str
         """
-        fastprint(progress_fmt(status, object_id, progress), end='\n')
+
+        print(progress_fmt(status, object_id, progress), end='\n')
 
     def close(self):
         """
@@ -149,11 +182,11 @@ class DockerFabricClient(DockerClientWrapper):
         Identical to :meth:`dockermap.client.base.DockerClientWrapper.build` with additional logging.
         """
         self.push_log("Building image '{0}'.".format(tag))
-        set_raise_on_error(kwargs)
+        self._set_raise_on_error(kwargs)
         try:
             return super(DockerFabricClient, self).build(tag, **kwargs)
         except DockerStatusError as e:
-            error(e.message)
+            raise Exit(e.message)
 
     def create_container(self, image, name=None, **kwargs):
         """
@@ -175,7 +208,7 @@ class DockerFabricClient(DockerClientWrapper):
         Identical to :meth:`dockermap.client.docker_util.DockerUtilityMixin.cleanup_containers` with additional logging.
         """
         self.push_log("Generating list of stopped containers.")
-        set_raise_on_error(kwargs, False)
+        self._set_raise_on_error(kwargs, False)
         return super(DockerFabricClient, self).cleanup_containers(include_initial=include_initial, exclude=exclude,
                                                                   **kwargs)
 
@@ -184,7 +217,7 @@ class DockerFabricClient(DockerClientWrapper):
         Identical to :meth:`dockermap.client.docker_util.DockerUtilityMixin.cleanup_images` with additional logging.
         """
         self.push_log("Checking images for dependent images and containers.")
-        set_raise_on_error(kwargs, False)
+        self._set_raise_on_error(kwargs, False)
         return super(DockerFabricClient, self).cleanup_images(remove_old=remove_old, keep_tags=keep_tags, **kwargs)
 
     def import_image(self, image=None, tag='latest', **kwargs):
@@ -208,11 +241,12 @@ class DockerFabricClient(DockerClientWrapper):
           * ``env.docker_registry_repository`` (kwarg: ``registry``),
           * ``env.docker_registry_insecure`` (kwarg: ``insecure_registry``).
         """
-        c_user = kwargs.pop('username', env.get('docker_registry_user'))
-        c_pass = kwargs.pop('password', env.get('docker_registry_password'))
-        c_mail = kwargs.pop('email', env.get('docker_registry_mail'))
-        c_registry = kwargs.pop('registry', env.get('docker_registry_repository'))
-        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
+        config = self.connection.config.get('docker', {})
+        c_user = kwargs.pop('username', config.get('registry_user'))
+        c_pass = kwargs.pop('password', config.get('registry_password'))
+        c_mail = kwargs.pop('email', config.get('registry_mail'))
+        c_registry = kwargs.pop('registry', config.get('registry_repository'))
+        c_insecure = kwargs.pop('insecure_registry', config.get('registry_insecure'))
         if super(DockerFabricClient, self).login(c_user, password=c_pass, email=c_mail, registry=c_registry,
                                                  insecure_registry=c_insecure, **kwargs):
             self.push_log("Login at registry '{0}' succeeded.".format(c_registry))
@@ -228,13 +262,14 @@ class DockerFabricClient(DockerClientWrapper):
         * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
           ``env.docker_registry_insecure``.
         """
-        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        set_raise_on_error(kwargs)
+        config = self.connection.config.get('docker', {})
+        c_insecure = kwargs.pop('insecure_registry', config.get('registry_insecure'))
+        self._set_raise_on_error(kwargs)
         try:
             return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream,
                                                         insecure_registry=c_insecure, **kwargs)
         except DockerStatusError as e:
-            error(e.message)
+            raise Exit(e.message)
 
     def push(self, repository, stream=True, **kwargs):
         """
@@ -244,13 +279,14 @@ class DockerFabricClient(DockerClientWrapper):
         * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
           ``env.docker_registry_insecure``.
         """
-        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        set_raise_on_error(kwargs)
+        config = self.connection.config.get('docker', {})
+        c_insecure = kwargs.pop('insecure_registry', config.get('registry_insecure'))
+        self._set_raise_on_error(kwargs)
         try:
             return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure,
                                                         **kwargs)
         except DockerStatusError as e:
-            error(e.message)
+            raise Exit(e.message)
 
     def restart(self, container, **kwargs):
         """
@@ -265,7 +301,7 @@ class DockerFabricClient(DockerClientWrapper):
         logging.
         """
         self.push_log("Fetching container list.")
-        set_raise_on_error(kwargs)
+        self._set_raise_on_error(kwargs)
         super(DockerFabricClient, self).remove_all_containers(**kwargs)
 
     def remove_container(self, container, **kwargs):
@@ -273,7 +309,7 @@ class DockerFabricClient(DockerClientWrapper):
         Identical to :meth:`dockermap.client.base.DockerClientWrapper.remove_container` with additional logging.
         """
         self.push_log("Removing container '{0}'.".format(container))
-        set_raise_on_error(kwargs)
+        self._set_raise_on_error(kwargs)
         super(DockerFabricClient, self).remove_container(container, **kwargs)
 
     def remove_image(self, image, **kwargs):
@@ -281,7 +317,7 @@ class DockerFabricClient(DockerClientWrapper):
         Identical to :meth:`dockermap.client.base.DockerClientWrapper.remove_image` with additional logging.
         """
         self.push_log("Removing image '{0}'.".format(image))
-        set_raise_on_error(kwargs)
+        self._set_raise_on_error(kwargs)
         super(DockerFabricClient, self).remove_image(image, **kwargs)
 
     def save_image(self, image, local_filename):
@@ -337,22 +373,13 @@ class DockerFabricClient(DockerClientWrapper):
         super(DockerFabricClient, self).remove_volume(name, **kwargs)
 
     def run_cmd(self, command):
-        sudo(command)
+        self.connection.sudo(command)
 
 
-class DockerClientConfiguration(FabricClientConfiguration):
-    init_kwargs = FabricClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
+class DockerClientConfiguration(ClientConfiguration):
+    init_kwargs = ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
     client_constructor = DockerFabricClient
-
-
-class DockerFabricApiConnections(DockerConnectionDict):
-    configuration_class = DockerClientConfiguration
 
 
 class ContainerApiFabricClient(FabricContainerClient):
     configuration_class = DockerClientConfiguration
-
-
-# Still defined here for backwards compatibility.
-docker_fabric = DockerFabricApiConnections().get_connection
-container_fabric = ContainerApiFabricClient

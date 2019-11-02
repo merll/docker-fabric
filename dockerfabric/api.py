@@ -1,35 +1,34 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from fabric.api import env
-
-from .apiclient import DockerFabricApiConnections, ContainerApiFabricClient, DockerClientConfiguration
-from .cli import DockerCliConnections, ContainerCliFabricClient, DockerCliConfig
+from .apiclient import DockerFabricClient, ContainerApiFabricClient
+from .cli import DockerCliClient, ContainerCliFabricClient
 
 CLIENT_API = 'API'
 CLIENT_CLI = 'CLI'
 
-docker_api = DockerFabricApiConnections().get_connection
-docker_cli = DockerCliConnections().get_connection
 
-
-def docker_fabric(*args, **kwargs):
+def docker_fabric(c, **kwargs):
     """
-    :param args: Positional arguments to Docker client.
+    :param c: connection
+    :type c: fabric.Connection
     :param kwargs: Keyword arguments to Docker client.
     :return: Docker client.
     :rtype: dockerfabric.apiclient.DockerFabricClient | dockerfabric.cli.DockerCliClient
     """
-    ci = kwargs.get('client_implementation') or env.get('docker_fabric_implementation') or CLIENT_API
+    config = c.config.get('docker', {})
+    ci = kwargs.get('client_implementation') or config.get('client_implementation') or CLIENT_API
     if ci == CLIENT_API:
-        return docker_api(*args, **kwargs)
+        return DockerFabricClient(connection=c, **kwargs)
     elif ci == CLIENT_CLI:
-        return docker_cli(*args, **kwargs)
+        return DockerCliClient(connection=c, **kwargs)
     raise ValueError("Invalid client implementation.", ci)
 
 
-def container_fabric(container_maps=None, docker_client=None, clients=None, client_implementation=None):
+def container_fabric(c, container_maps=None, docker_client=None, clients=None, client_implementation=None):
     """
+    :param c: connection
+    :type c: fabric.Connection
     :param container_maps: Container map or a tuple / list thereof.
     :type container_maps: list[dockermap.map.config.main.ContainerMap] | dockermap.map.config.main.ContainerMap
     :param docker_client: Default Docker client instance.
@@ -41,9 +40,10 @@ def container_fabric(container_maps=None, docker_client=None, clients=None, clie
     :return: Container mapping client.
     :rtype: dockerfabric.base.FabricContainerClient
     """
-    ci = client_implementation or env.get('docker_fabric_implementation') or CLIENT_API
+    config = c.config.get('docker', {})
+    ci = client_implementation or config.get('client_implementation') or CLIENT_API
     if ci == CLIENT_API:
-        return ContainerApiFabricClient(container_maps, docker_client, clients)
+        return ContainerApiFabricClient(c, container_maps, docker_client, clients)
     elif ci == CLIENT_CLI:
-        return ContainerCliFabricClient(container_maps, docker_client, clients)
+        return ContainerCliFabricClient(c, container_maps, docker_client, clients)
     raise ValueError("Invalid client implementation.", ci)

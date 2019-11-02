@@ -5,144 +5,156 @@ import os
 import posixpath
 
 import yaml
-from fabric.api import get, put, puts, task, fastprint
-from fabric.utils import error
+from fabric import task
+from invoke.exceptions import Exit
 from six import iteritems
 
 from dockermap.map.action import ContainerUtilAction
-from .apiclient import container_fabric
+from .api import container_fabric
 from .utils.files import temp_dir
 
 
 @task
-def perform(action_name, container, **kwargs):
+def perform(c, action_name, container, **kwargs):
     """
     Performs an action on the given container map and configuration.
 
+    :param c: Connection
     :param action_name: Name of the action (e.g. ``update``).
     :param container: Container configuration name.
     :param kwargs: Keyword arguments for the action implementation.
     """
-    cf = container_fabric()
+    cf = container_fabric(c)
     cf.call(action_name, container, **kwargs)
 
 
 @task
-def create(container, **kwargs):
+def create(c, container, **kwargs):
     """
     Creates a container and its dependencies.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().create(container, **kwargs)
+    container_fabric(c).create(container, **kwargs)
 
 
 @task
-def start(container, **kwargs):
+def start(c, container, **kwargs):
     """
     Starts a container and its dependencies.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().start(container, **kwargs)
+    container_fabric(c).start(container, **kwargs)
 
 
 @task
-def stop(container, **kwargs):
+def stop(c, container, **kwargs):
     """
     Stops a container and its dependents.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().stop(container, **kwargs)
+    container_fabric(c).stop(container, **kwargs)
 
 
 @task
-def remove(container, **kwargs):
+def remove(c, container, **kwargs):
     """
     Removes a container and its dependents.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().remove(container, **kwargs)
+    container_fabric(c).remove(container, **kwargs)
 
 
 @task
-def restart(container, **kwargs):
+def restart(c, container, **kwargs):
     """
     Restarts a container and starts its dependencies if necessary.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().restart(container, **kwargs)
+    container_fabric(c).restart(container, **kwargs)
 
 
 @task
-def startup(container, **kwargs):
+def startup(c, container, **kwargs):
     """
     Creates and starts a container and its dependencies.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().startup(container, **kwargs)
+    container_fabric(c).startup(container, **kwargs)
 
 
 @task
-def shutdown(container, **kwargs):
+def shutdown(c, container, **kwargs):
     """
     Stops and removes a container and its dependents.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().shutdown(container, **kwargs)
+    container_fabric(c).shutdown(container, **kwargs)
 
 
 @task
-def update(container, **kwargs):
+def update(c, container, **kwargs):
     """
     Updates a container and its dependencies. Creates and starts containers as necessary.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().update(container, **kwargs)
+    container_fabric(c).update(container, **kwargs)
 
 
 @task
-def kill(container, **kwargs):
+def kill(c, container, **kwargs):
     """
     Sends a signal to a container, by default ``SIGKILL``. You can also pass a different signal such as ``SIGHUP``.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().signal(container, **kwargs)
+    container_fabric(c).signal(container, **kwargs)
 
 
 @task
-def pull_images(container, **kwargs):
+def pull_images(c, container, **kwargs):
     """
     Pulls missing images, including dependencies.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param kwargs: Keyword arguments to the action implementation.
     """
-    container_fabric().pull_images(container, **kwargs)
+    container_fabric(c).pull_images(container, **kwargs)
 
 
 @task
-def script(container, script_path, fail_nonzero=False, upload_dir=False, **kwargs):
+def script(c, container, script_path, fail_nonzero=False, upload_dir=False, **kwargs):
     """
     Runs a script inside a container, which is created with all its dependencies. The container is removed after it
     has been run, whereas the dependencies are not destroyed. The output is printed to the console.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param script_path: Local path to the script file.
     :param fail_nonzero: Fail if the script returns with a nonzero exit code.
@@ -151,58 +163,55 @@ def script(container, script_path, fail_nonzero=False, upload_dir=False, **kwarg
     """
     full_script_path = os.path.abspath(script_path)
     prefix, name = os.path.split(full_script_path)
-    with temp_dir() as remote_tmp:
+    with temp_dir(c) as remote_tmp:
         if upload_dir:
             prefix_path, prefix_name = os.path.split(prefix)
             remote_script = posixpath.join(remote_tmp, prefix_name, name)
-            put(prefix, remote_tmp, mirror_local_mode=True)
+            c.put(prefix, remote_tmp, mirror_local_mode=True)
         else:
             remote_script = posixpath.join(remote_tmp, name)
-            put(script_path, remote_script, mirror_local_mode=True)
+            c.put(script_path, remote_script, mirror_local_mode=True)
         results = [output.result
-                   for output in container_fabric().run_script(container, script_path=remote_script, **kwargs)
-                   if o.action_type == ContainerUtilAction.SCRIPT]
+                   for output in container_fabric(c).run_script(container, script_path=remote_script, **kwargs)
+                   if output.action_type == ContainerUtilAction.SCRIPT]
     for res in results:
-        puts("Exit code: {0}".format(res['exit_code']))
         if res['exit_code'] == 0 or not fail_nonzero:
-            puts(res['log'])
-        else:
-            error(res['log'])
+            return res['log']
+        raise Exit(res['log'], res['exit_code'])
 
 
 @task
-def single_cmd(container, command, fail_nonzero=False, download_result=None, **kwargs):
+def single_cmd(c, container, command, fail_nonzero=False, download_result=None, **kwargs):
     """
     Runs a script inside a container, which is created with all its dependencies. The container is removed after it
     has been run, whereas the dependencies are not destroyed. The output is printed to the console.
 
+    :param c: Connection
     :param container: Container configuration name.
     :param command: Command line to run.
     :param fail_nonzero: Fail if the script returns with a nonzero exit code.
     :param download_result: Download any results that the command has written back to a temporary directory.
     :param kwargs: Additional keyword arguments to the run_script action.
     """
-    with temp_dir() as remote_tmp:
+    with temp_dir(c) as remote_tmp:
         kwargs.setdefault('command_format', ['-c', command])
         results = [output.result
-                   for output in container_fabric().run_script(container, script_path=remote_tmp, **kwargs)
-                   if o.action_type == ContainerUtilAction.SCRIPT]
+                   for output in container_fabric(c).run_script(container, script_path=remote_tmp, **kwargs)
+                   if output.action_type == ContainerUtilAction.SCRIPT]
         if download_result:
-            get(posixpath.join(remote_tmp, '*'), local_path=download_result)
+            c.get(posixpath.join(remote_tmp, '*'), local_path=download_result)
     for res in results:
-        puts("Exit code: {0}".format(res['exit_code']))
         if res['exit_code'] == 0 or not fail_nonzero:
-            puts(res['log'])
-        else:
-            error(res['log'])
+            return res['log']
+        raise Exit(res['log'], res['exit_code'])
 
 
 @task
-def show(map_name=None):
-    all_maps = container_fabric().maps
+def show(c, map_name=None):
+    all_maps = container_fabric(c).maps
     if map_name:
         data = all_maps[map_name].as_dict()
     else:
         data = {k: v.as_dict()
                 for k, v in iteritems(all_maps)}
-    fastprint(yaml.safe_dump(data, default_flow_style=False, canonical=False))
+    return yaml.safe_dump(data, default_flow_style=False, canonical=False)

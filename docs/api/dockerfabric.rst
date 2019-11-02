@@ -59,14 +59,6 @@ dockerfabric.tunnel module
     :undoc-members:
     :show-inheritance:
 
-dockerfabric.yaml module
-------------------------
-
-.. automodule:: dockerfabric.yaml
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------

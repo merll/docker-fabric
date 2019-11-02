@@ -4,17 +4,15 @@ from __future__ import unicode_literals
 import os
 import posixpath
 
-from fabric.api import cd, env, fastprint, get, put, run, settings, sudo
-from fabric.network import needs_host
-
 from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
                                   parse_images_output, parse_version_output, parse_top_output, parse_networks_output,
                                   parse_volumes_output)
 from dockermap.client.docker_util import DockerUtilityMixin
+from dockermap.map.config.client import ClientConfiguration
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
-from .base import DockerConnectionDict, FabricContainerClient, FabricClientConfiguration
+from .base import FabricContainerClient
 from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
 
@@ -30,6 +28,8 @@ class DockerCliClient(DockerUtilityMixin):
     """
     Docker client for Fabric using the command line interface on a remote host.
 
+    :param connection: Fabric connection.
+    :type connection: fabric.connection.Connection
     :param cmd_prefix: Custom prefix to prepend to the Docker command line.
     :type cmd_prefix: unicode | str
     :param default_bin: Docker binary to use. If not set, uses ``docker``.
@@ -45,28 +45,35 @@ class DockerCliClient(DockerUtilityMixin):
      for some feedback.
     :type debug: bool
     """
-    def __init__(self, cmd_prefix=None, default_bin=None, base_url=None, tls=None, use_sudo=None, debug=None):
+    def __init__(self, connection, cmd_prefix=None, default_bin=None, base_url=None, tls=None, use_sudo=None,
+                 debug=None):
         super(DockerCliClient, self).__init__()
-        base_url = base_url or env.get('docker_base_url')
+        self.connection = connection
+        config = connection.config.get('docker', {})
+        base_url = base_url or config.get('base_url')
         if base_url:
             cmd_args = ['-H {0}'.format(base_url)]
         else:
             cmd_args = []
-        if tls or (tls is None and env.get('docker_tls')):
+        if tls or (tls is None and config.get('docker_tls')):
             cmd_args.append('--tls')
-        self._out = DockerCommandLineOutput(cmd_prefix or env.get('docker_cli_prefix'),
-                                            default_bin or env.get('docker_cli_bin', 'docker'), cmd_args or None)
-        if use_sudo or (use_sudo is None and env.get('docker_cli_sudo')):
-            self._call_method = sudo
+        self._out = DockerCommandLineOutput(cmd_prefix or config.get('cli_prefix'),
+                                            default_bin or config.get('cli_bin', 'docker'), cmd_args or None)
+        if use_sudo or (use_sudo is None and config.get('cli_sudo')):
+            self._call_method = connection.sudo
         else:
-            self._call_method = run
-        self._quiet = not (debug or (debug is None and env.get('docker_cli_debug')))
+            self._call_method = connection.run
+        self._quiet = not (debug or (debug is None and config.get('cli_debug')))
         self.api_version = None
         self._update_api_version()
 
-    def _call(self, cmd, quiet=False):
+    def _call(self, cmd, quiet=False, **kwargs):
         if cmd:
-            return self._call_method(cmd, shell=False, quiet=quiet and self._quiet)
+            if quiet and self._quiet:
+                hide = 'stdout'
+            else:
+                hide = None
+            return self._call_method(cmd, shell=False, hide=hide, **kwargs)
         return None
 
     def create_container(self, *args, **kwargs):
@@ -200,6 +207,7 @@ class DockerCliClient(DockerUtilityMixin):
         return self._call(cmd_str, quiet=True)
 
     def login(self, **kwargs):
+        config = self.connection.get('docker', {})
         for key, variable in [
             ('username', 'user'),
             ('password', 'password'),
@@ -208,17 +216,17 @@ class DockerCliClient(DockerUtilityMixin):
             ('insecure_registry', 'insecure')
         ]:
             if key not in kwargs:
-                env_value = env.get('docker_registry_{0}'.format(variable))
+                env_value = config.get('registry_{0}'.format(variable))
                 if env_value:
                     kwargs[key] = env_value
-        registry = kwargs.pop('registry', env.get('docker_registry_repository'))
+        registry = kwargs.pop('registry', config.get('registry_repository'))
         if registry:
             cmd_str = self._out.get_cmd('login', registry, **kwargs)
         else:
             cmd_str = self._out.get_cmd('login', **kwargs)
         res = self._call(cmd_str, quiet=True)
         lines = res.splitlines()
-        fastprint(lines)
+        print(lines)
         return 'Login Succeeded' in lines
 
     def build(self, tag, add_latest_tag=False, add_tags=None, raise_on_error=True, **kwargs):
@@ -229,12 +237,12 @@ class DockerCliClient(DockerUtilityMixin):
         for a in ['custom_context', 'encoding']:
             kwargs.pop(a, None)
 
-        with temp_dir() as remote_tmp:
+        c = self.connection
+        with temp_dir(c) as remote_tmp:
             remote_fn = posixpath.join(remote_tmp, 'context')
-            put(context, remote_fn)
+            c.put(context, remote_fn)
             cmd_str = self._out.get_cmd('build', '- <', remote_fn, tag=tag, **kwargs)
-            with settings(warn_only=not raise_on_error):
-                res = self._call(cmd_str)
+            res = self._call(cmd_str, warn=not raise_on_error)
         if res:
             image_id = _find_image_id(res)
             if image_id:
@@ -246,7 +254,7 @@ class DockerCliClient(DockerUtilityMixin):
         kwargs.pop('api_version', None)
         cmd_str = self._out.get_cmd('version')
         res = self._call(cmd_str, quiet=True)
-        version_dict = parse_version_output(res)
+        version_dict = parse_version_output(res.stdout)
         return version_dict
 
     def push_log(self, info, level, *args, **kwargs):
@@ -262,10 +270,10 @@ class DockerCliClient(DockerUtilityMixin):
             self.api_version = version_dict['ApiVersion']
 
     def run_cmd(self, command):
-        sudo(command)
+        self.connection.sudo(command)
 
 
-class DockerCliConfig(FabricClientConfiguration):
+class DockerCliConfig(ClientConfiguration):
     init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo', 'debug'
     client_constructor = DockerCliClient
 
@@ -274,23 +282,16 @@ class DockerCliConfig(FabricClientConfiguration):
         self.use_host_config = USE_HC_MERGE
 
 
-class DockerCliConnections(DockerConnectionDict):
-    configuration_class = DockerCliConfig
-
-
 class ContainerCliFabricClient(FabricContainerClient):
     configuration_class = DockerCliConfig
 
 
-docker_cli = DockerCliConnections().get_connection
-container_cli = ContainerCliFabricClient
-
-
-@needs_host
-def copy_resource(container, resource, local_filename, contents_only=True):
+def copy_resource(c, container, resource, local_filename, contents_only=True):
     """
     Copies a resource from a container to a compressed tarball and downloads it.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param container: Container name or id.
     :type container: unicode | str
     :param resource: Name of resource to copy.
@@ -301,32 +302,34 @@ def copy_resource(container, resource, local_filename, contents_only=True):
       set to ``False``, the directory itself will be at the root instead.
     :type contents_only: bool
     """
-    with temp_dir() as remote_tmp:
+    with temp_dir(c) as remote_tmp:
         base_name = os.path.basename(resource)
         copy_path = posixpath.join(remote_tmp, 'copy_tmp')
-        run(mkdir(copy_path, check_if_exists=True))
+        c.run(mkdir(copy_path, check_if_exists=True))
         remote_name = posixpath.join(copy_path, base_name)
         archive_name = 'container_{0}.tar.gz'.format(container)
         archive_path = posixpath.join(remote_tmp, archive_name)
-        run('docker cp {0}:{1} {2}'.format(container, resource, copy_path), shell=False)
-        if contents_only and is_directory(remote_name):
+        c.run('docker cp {0}:{1} {2}'.format(container, resource, copy_path), shell=False)
+        if contents_only and is_directory(c, remote_name):
             src_dir = remote_name
             src_files = '*'
         else:
             src_dir = copy_path
             src_files = base_name
-        with cd(src_dir):
-            run(targz(archive_path, src_files))
-        get(archive_path, local_filename)
+        with c.cd(src_dir):
+            c.run(targz(archive_path, src_files))
+        c.get(archive_path, local_filename)
 
 
-@needs_host
-def copy_resources(src_container, src_resources, storage_dir, dst_directories=None, apply_chown=None, apply_chmod=None):
+def copy_resources(c, src_container, src_resources, storage_dir, dst_directories=None, apply_chown=None,
+                   apply_chmod=None):
     """
     Copies files and directories from a Docker container. Multiple resources can be copied and additional options are
     available than in :func:`copy_resource`. Unlike in :func:`copy_resource`, Resources are copied as they are and not
     compressed to a tarball, and they are left on the remote machine.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param src_container: Container name or id.
     :type src_container: unicode | str
     :param src_resources: Resources, as (file or directory) names to copy.
@@ -349,25 +352,26 @@ def copy_resources(src_container, src_resources, storage_dir, dst_directories=No
         dest_path = directories.get(resource, default_dest_path).strip(posixpath.sep)
         head, tail = posixpath.split(dest_path)
         rel_path = posixpath.join(storage_dir, head)
-        run(mkdir(rel_path, check_if_exists=True))
-        run('docker cp {0}:{1} {2}'.format(src_container, resource, rel_path), shell=False)
+        c.run(mkdir(rel_path, check_if_exists=True))
+        c.run('docker cp {0}:{1} {2}'.format(src_container, resource, rel_path), shell=False)
 
     directories = dst_directories or {}
     generic_path = directories.get('*')
     for res in src_resources:
         _copy_resource(res)
     if apply_chmod:
-        run(chmod(apply_chmod, storage_dir))
+        c.run(chmod(apply_chmod, storage_dir))
     if apply_chown:
-        sudo(chown(apply_chown, storage_dir))
+        c.sudo(chown(apply_chown, storage_dir))
 
 
-@needs_host
-def isolate_and_get(src_container, src_resources, local_dst_dir, **kwargs):
+def isolate_and_get(c, src_container, src_resources, local_dst_dir, **kwargs):
     """
     Uses :func:`copy_resources` to copy resources from a container, but afterwards generates a compressed tarball
     and downloads it.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param src_container: Container name or id.
     :type src_container: unicode | str
     :param src_resources: Resources, as (file or directory) names to copy.
@@ -377,21 +381,22 @@ def isolate_and_get(src_container, src_resources, local_dst_dir, **kwargs):
     :type local_dst_dir: unicode | str
     :param kwargs: Additional kwargs for :func:`copy_resources`.
     """
-    with temp_dir() as remote_tmp:
+    with temp_dir(c) as remote_tmp:
         copy_path = posixpath.join(remote_tmp, 'copy_tmp')
         archive_path = posixpath.join(remote_tmp, 'container_{0}.tar.gz'.format(src_container))
-        copy_resources(src_container, src_resources, copy_path, **kwargs)
-        with cd(copy_path):
-            sudo(targz(archive_path, '*'))
-        get(archive_path, local_dst_dir)
+        copy_resources(c, src_container, src_resources, copy_path, **kwargs)
+        with c.cd(copy_path):
+            c.sudo(targz(archive_path, '*'))
+        c.get(archive_path, local_dst_dir)
 
 
-@needs_host
-def isolate_to_image(src_container, src_resources, dst_image, **kwargs):
+def isolate_to_image(c, src_container, src_resources, dst_image, **kwargs):
     """
     Uses :func:`copy_resources` to copy resources from a container, but afterwards imports the contents into a new
     (otherwise empty) Docker image.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param src_container: Container name or id.
     :type src_container: unicode | str
     :param src_resources: Resources, as (file or directory) names to copy.
@@ -400,49 +405,46 @@ def isolate_to_image(src_container, src_resources, dst_image, **kwargs):
     :type dst_image: unicode | str
     :param kwargs: Additional kwargs for :func:`copy_resources`.
     """
-    with temp_dir() as remote_tmp:
-        copy_resources(src_container, src_resources, remote_tmp, **kwargs)
-        with cd(remote_tmp):
-            sudo('tar -cz * | docker import - {0}'.format(dst_image))
+    with temp_dir(c) as remote_tmp:
+        copy_resources(c, src_container, src_resources, remote_tmp, **kwargs)
+        with c.cd(remote_tmp):
+            c.sudo('tar -cz * | docker import - {0}'.format(dst_image))
 
 
-@needs_host
-def save_image(image, local_filename):
+def save_image(c, image, local_filename):
     """
     Saves a Docker image as a compressed tarball. This command line client method is a suitable alternative, if the
     Remove API method is too slow.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param image: Image id or tag.
     :type image: unicode | str
     :param local_filename: Local file name to store the image into. If this is a directory, the image will be stored
       there as a file named ``image_<Image name>.tar.gz``.
     """
     r_name, __, i_name = image.rpartition('/')
-    i_name, __, __ = i_name.partition(':')
-    with temp_dir() as remote_tmp:
+    i_name = i_name.partition(':')[0]
+    with temp_dir(c) as remote_tmp:
         archive = posixpath.join(remote_tmp, 'image_{0}.tar.gz'.format(i_name))
-        run('docker save {0} | gzip --stdout > {1}'.format(image, archive), shell=False)
-        get(archive, local_filename)
+        c.run('docker save {0} | gzip --stdout > {1}'.format(image, archive), shell=False)
+        c.get(archive, local_filename)
 
 
-@needs_host
-def flatten_image(image, dest_image=None, no_op_cmd='/bin/true', create_kwargs={}, start_kwargs={}):
+def flatten_image(c, image, dest_image=None, **kwargs):
     """
     Exports a Docker image's file system and re-imports it into a new (otherwise new) image. Note that this does not
     transfer the image configuration. In order to gain access to the container contents, the image is started with a
     non-operational command, such as ``/bin/true``. The container is removed once the new image has been created.
 
+    :param c: Fabric connection.
+    :type c: fabric.connection.Connection
     :param image: Image id or tag.
     :type image: unicode | str
     :param dest_image: Tag for the new image.
     :type dest_image: unicode | str
-    :param no_op_cmd: Dummy command for starting temporary container.
-    :type no_op_cmd: unicode | str
-    :param create_kwargs: Optional additional kwargs for creating the temporary container.
-    :type create_kwargs: dict
-    :param start_kwargs: Optional additional kwargs for starting the temporary container.
-    :type start_kwargs: dict
+    :param kwargs: Additional kwargs for the temporary container.
     """
     dest_image = dest_image or image
-    with temp_container(image, no_op_cmd=no_op_cmd, create_kwargs=create_kwargs, start_kwargs=start_kwargs) as c:
-        run('docker export {0} | docker import - {1}'.format(c, dest_image), shell=False)
+    with temp_container(c, image, **kwargs) as tc:
+        c.run('docker export {0} | docker import - {1}'.format(tc, dest_image), shell=False)
