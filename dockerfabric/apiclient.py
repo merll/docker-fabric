@@ -377,7 +377,7 @@ class DockerFabricClient(DockerClientWrapper):
 
 
 class DockerClientConfiguration(ClientConfiguration):
-    init_kwargs = ClientConfiguration.init_kwargs + ('tunnel_remote_port', 'tunnel_local_port')
+    init_kwargs = ClientConfiguration.init_kwargs + ('connection', 'tunnel_remote_port', 'tunnel_local_port')
     client_constructor = DockerFabricClient
 
 
