@@ -7,8 +7,8 @@ from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
 from dockermap.api import DockerClientWrapper
 from dockermap.map.config.client import ClientConfiguration
 from .base import get_local_port, FabricContainerClient, set_registry_config_kwargs, set_insecure_registry_kwarg
-from .socat import SocketTunnel
-from .tunnel import LocalTunnel
+from .tunnel.socat import SocketTunnel
+from .tunnel.local import LocalTunnel
 
 
 DEFAULT_TCP_HOST = 'tcp://127.0.0.1'
