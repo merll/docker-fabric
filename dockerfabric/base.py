@@ -6,7 +6,9 @@ import logging
 import multiprocessing
 
 from dockermap.api import MappingDockerClient, ClientConfiguration
+from dockermap.docker_api import INSECURE_REGISTRIES
 from fabric.api import env, settings
+
 
 log = logging.getLogger(__name__)
 port_offset = multiprocessing.Value(ctypes.c_ulong)
@@ -112,6 +114,30 @@ class FabricContainerClient(MappingDockerClient):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
+
+
+def set_insecure_registry_kwarg(kwargs, config):
+    if INSECURE_REGISTRIES:
+        if 'insecure_registry' not in kwargs and 'docker_registry_insecure' in config:
+            kwargs['insecure_registry'] = config['docker_registry_insecure']
+    else:
+        c_insecure = kwargs.pop('insecure_registry', None)
+        if c_insecure or config.get('docker_registry_insecure'):
+            print("WARNING: This Docker SDK does not support insecure registry configurations.")
+
+
+def set_registry_config_kwargs(kwargs, env):
+    for key, variable in [
+        ('username', 'user'),
+        ('password', 'password'),
+        ('email', 'mail'),
+        ('registry', 'repository'),
+    ]:
+        if key not in kwargs:
+            cfg_value = env.get('docker_registry_{0}'.format(variable))
+            if cfg_value is not None:
+                kwargs[key] = cfg_value
+    set_insecure_registry_kwarg(kwargs, env)
 
 
 def get_local_port(init_port):

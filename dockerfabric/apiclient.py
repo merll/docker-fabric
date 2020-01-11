@@ -6,8 +6,8 @@ from fabric.utils import puts, fastprint, error
 
 from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
 from dockermap.api import DockerClientWrapper
-from .base import (get_local_port, set_raise_on_error, DockerConnectionDict, FabricClientConfiguration,
-                   FabricContainerClient)
+from .base import (get_local_port, set_raise_on_error, set_registry_config_kwargs, set_insecure_registry_kwarg,
+                   DockerConnectionDict, FabricClientConfiguration, FabricContainerClient)
 from .socat import socat_tunnels
 from .tunnel import local_tunnels
 
@@ -208,13 +208,9 @@ class DockerFabricClient(DockerClientWrapper):
           * ``env.docker_registry_repository`` (kwarg: ``registry``),
           * ``env.docker_registry_insecure`` (kwarg: ``insecure_registry``).
         """
-        c_user = kwargs.pop('username', env.get('docker_registry_user'))
-        c_pass = kwargs.pop('password', env.get('docker_registry_password'))
-        c_mail = kwargs.pop('email', env.get('docker_registry_mail'))
-        c_registry = kwargs.pop('registry', env.get('docker_registry_repository'))
-        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
-        if super(DockerFabricClient, self).login(c_user, password=c_pass, email=c_mail, registry=c_registry,
-                                                 insecure_registry=c_insecure, **kwargs):
+        set_registry_config_kwargs(kwargs, env)
+        c_registry = kwargs.get('registry')
+        if super(DockerFabricClient, self).login(**kwargs):
             self.push_log("Login at registry '{0}' succeeded.".format(c_registry))
             return True
         self.push_log("Login at registry '{0}' failed.".format(c_registry))
@@ -228,11 +224,10 @@ class DockerFabricClient(DockerClientWrapper):
         * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
           ``env.docker_registry_insecure``.
         """
-        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
+        set_insecure_registry_kwarg(kwargs, env)
         set_raise_on_error(kwargs)
         try:
-            return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream,
-                                                        insecure_registry=c_insecure, **kwargs)
+            return super(DockerFabricClient, self).pull(repository, tag=tag, stream=stream, **kwargs)
         except DockerStatusError as e:
             error(e.message)
 
@@ -244,11 +239,10 @@ class DockerFabricClient(DockerClientWrapper):
         * the ``insecure_registry`` flag can be passed through ``kwargs``, or set as default using
           ``env.docker_registry_insecure``.
         """
-        c_insecure = kwargs.pop('insecure_registry', env.get('docker_registry_insecure'))
+        set_insecure_registry_kwarg(kwargs, env)
         set_raise_on_error(kwargs)
         try:
-            return super(DockerFabricClient, self).push(repository, stream=stream, insecure_registry=c_insecure,
-                                                        **kwargs)
+            return super(DockerFabricClient, self).push(repository, stream=stream, **kwargs)
         except DockerStatusError as e:
             error(e.message)
 
