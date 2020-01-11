@@ -115,6 +115,31 @@ class FabricContainerClient(MappingDockerClient):
         pass
 
 
+def set_insecure_registry_kwarg(kwargs, config):
+    if INSECURE_REGISTRIES:
+        if 'insecure_registry' not in kwargs and 'registry_insecure' in config:
+            kwargs['insecure_registry'] = config['registry_insecure']
+    else:
+        c_insecure = kwargs.pop('insecure_registry', None)
+        if c_insecure or config.get('registry_insecure'):
+            print("WARNING: This Docker SDK does not support insecure registry configurations.")
+
+
+def set_registry_config_kwargs(kwargs, connection):
+    config = connection.config.get('docker', {})
+    for key, variable in [
+        ('username', 'user'),
+        ('password', 'password'),
+        ('email', 'mail'),
+        ('registry', 'repository'),
+    ]:
+        if key not in kwargs:
+            cfg_value = config.get('registry_{0}'.format(variable))
+            if cfg_value is not None:
+                kwargs[key] = cfg_value
+    set_insecure_registry_kwarg(kwargs, config)
+
+
 def get_local_port(init_port):
     with port_offset.get_lock():
         current_offset = port_offset.value
