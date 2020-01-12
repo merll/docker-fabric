@@ -12,7 +12,7 @@ from dockermap.client.docker_util import DockerUtilityMixin
 from dockermap.map.config.client import ClientConfiguration
 from dockermap.shortcuts import chmod, chown, targz, mkdir
 
-from .base import FabricContainerClient
+from .base import FabricContainerClient, set_registry_config_kwargs
 from .utils.containers import temp_container
 from .utils.files import temp_dir, is_directory
 
@@ -208,18 +208,8 @@ class DockerCliClient(DockerUtilityMixin):
 
     def login(self, **kwargs):
         config = self.connection.get('docker', {})
-        for key, variable in [
-            ('username', 'user'),
-            ('password', 'password'),
-            ('email', 'mail'),
-            ('registry', 'repository'),
-            ('insecure_registry', 'insecure')
-        ]:
-            if key not in kwargs:
-                env_value = config.get('registry_{0}'.format(variable))
-                if env_value:
-                    kwargs[key] = env_value
-        registry = kwargs.pop('registry', config.get('registry_repository'))
+        set_registry_config_kwargs(kwargs, config)
+        registry = kwargs.pop('registry')
         if registry:
             cmd_str = self._out.get_cmd('login', registry, **kwargs)
         else:
