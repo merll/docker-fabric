@@ -63,7 +63,6 @@ def get_client_kwargs(connection, map_configs, client_configs, client_cls):
     all_client_names = set(all_clients.keys())
     used_client_names = set()
     for map_name, map_cfg in mi:
-        print(map_name)
         if isinstance(map_cfg, dict):
             cfg_obj = ContainerMap(map_name, map_cfg)
         elif isinstance(map_cfg, ContainerMap):
