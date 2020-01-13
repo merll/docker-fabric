@@ -73,7 +73,8 @@ class DockerCliClient(DockerUtilityMixin):
                 hide = 'stdout'
             else:
                 hide = None
-            return self._call_method(cmd, shell=False, hide=hide, **kwargs)
+            res = self._call_method(cmd, shell=False, hide=hide, **kwargs)
+            return res.stdout
         return None
 
     def create_container(self, *args, **kwargs):
@@ -244,7 +245,7 @@ class DockerCliClient(DockerUtilityMixin):
         kwargs.pop('api_version', None)
         cmd_str = self._out.get_cmd('version')
         res = self._call(cmd_str, quiet=True)
-        version_dict = parse_version_output(res.stdout)
+        version_dict = parse_version_output(res)
         return version_dict
 
     def push_log(self, info, level, *args, **kwargs):
