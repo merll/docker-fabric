@@ -264,7 +264,7 @@ class DockerCliClient(DockerUtilityMixin):
 
 
 class DockerCliConfig(ClientConfiguration):
-    init_kwargs = 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo', 'debug'
+    init_kwargs = 'connection', 'base_url', 'tls', 'cmd_prefix', 'default_bin', 'use_sudo', 'debug'
     client_constructor = DockerCliClient
 
     def update_settings(self, **kwargs):
