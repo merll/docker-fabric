@@ -14,16 +14,12 @@ IP6_FAMILY = 'inet6'
 
 
 def _get_address(c, interface_name, family, scope):
-    out = stdout_result(c, 'ip -j address'.format(interface_name), (1,), shell=False, quiet=True)
+    ip_cmd = 'ip -j -f {0} address show dev {1} scope {2}'.format(family, interface_name, scope)
+    out = stdout_result(c, ip_cmd, (1,), shell=False, quiet=True)
     parsed = json.loads(out)
-    item = [i
-            for i in parsed
-            if i['ifname'] == interface_name]
-    if not item:
-        raise Exit("Network interface {0} not found.".format(interface_name))
-    addr_info = [a
-                 for a in item[0]['addr_info']
-                 if a['scope'] == scope and a['family'] == family]
+    if not parsed:
+        raise Exit("No {0} address found for interface {1} and scope {2}.".format(family, interface_name, scope))
+    addr_info = parsed[0].get('addr_info')
     if not addr_info:
         raise Exit("No {0} address found for interface {1} and scope {2}.".format(family, interface_name, scope))
     return addr_info[0]['local']
