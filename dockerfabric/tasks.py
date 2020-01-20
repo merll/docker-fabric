@@ -42,8 +42,9 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
         return six.text_type(data),
 
     def _max_len(col_data):
-        if col_data:
-            return max(map(len, col_data))
+        cd_tuple = tuple(col_data)
+        if cd_tuple:
+            return max(map(len, cd_tuple))
         return 0
 
     print('')
