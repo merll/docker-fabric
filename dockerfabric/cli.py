@@ -271,7 +271,7 @@ class DockerCliConfig(FabricClientConfiguration):
 
     def update_settings(self, **kwargs):
         super(DockerCliConfig, self).update_settings(**kwargs)
-        self.use_host_config = USE_HC_MERGE
+        self._features['host_config'] = USE_HC_MERGE
 
 
 class DockerCliConnections(DockerConnectionDict):
