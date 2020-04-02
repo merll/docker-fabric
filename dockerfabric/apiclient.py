@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import sys
+
 from invoke import Exit
 
 from dockermap.client.base import LOG_PROGRESS_FORMAT, DockerStatusError
@@ -144,14 +146,18 @@ class DockerFabricClient(DockerClientWrapper):
         :param level: Logging level. Has no effect here.
         :type level: int
         """
+        if not info:
+            return
         if args:
             msg = info % args
+            print(msg, end='')
+        elif isinstance(info, (bytes, bytearray)):
+            sys.stdout.buffer.write(info)
         else:
-            msg = info
-        try:
-            print('docker: {0}'.format(msg))
-        except UnicodeDecodeError:
-            print('docker: -- non-printable output --')
+            if info[-1] == '\n':
+                print(info, end='')
+            else:
+                print(info)
 
     def push_progress(self, status, object_id, progress):
         """
@@ -164,7 +170,6 @@ class DockerFabricClient(DockerClientWrapper):
         :param progress: Progress bar.
         :type progress: unicode | str
         """
-
         print(progress_fmt(status, object_id, progress), end='\n')
 
     def close(self):
