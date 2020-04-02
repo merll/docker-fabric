@@ -58,16 +58,13 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
     print('', flush=True)
 
 
-@task
+@task(help={
+    'use_sudo': "Use 'sudo' command. As Docker-Fabric does not run 'socat' with 'sudo', this is by default not set. "
+                "It could unintentionally remove instances from other users."
+})
 def reset_socat(c, use_sudo=False):
     """
     Finds and closes all processes of `socat`.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param use_sudo: Use `sudo` command. As Docker-Fabric does not run `socat` with `sudo`, this is by default set to
-      ``False``. Setting it to ``True`` could unintentionally remove instances from other users.
-    :type use_sudo: bool
     """
     output = stdout_result(c, 'ps -o pid -C socat', quiet=True)
     pids = output.split('\n')[1:]
@@ -79,10 +76,7 @@ def reset_socat(c, use_sudo=False):
 @task
 def version(c):
     """
-    Shows version information of the remote Docker service, similar to ``docker version``.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
+    Shows version information of the remote Docker service, similar to 'docker version'.
     """
     output = docker_fabric(c).version()
     col_len = max(map(len, output.keys())) + 1
@@ -92,79 +86,59 @@ def version(c):
     print('', flush=True)
 
 
-@task
+@task(help={
+    'interface_name': "Name of the network interface. Default is 'docker0'."
+})
 def get_ip(c, interface_name='docker0'):
     """
     Shows the IP4 address of a network interface.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param interface_name: Name of the network interface. Default is ``docker0``.
-    :type interface_name: unicode | str
     """
     print(get_ip4_address(c, interface_name))
 
 
-@task
+@task(help={
+    'interface_name': "Name of the network interface. Default is 'docker0'.",
+    'expand': "Expand the abbreviated IP6 address."
+})
 def get_ipv6(c, interface_name='docker0', expand=False):
     """
     Shows the IP6 address of a network interface.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param interface_name: Name of the network interface. Default is ``docker0``.
-    :type interface_name: unicode | str
-    :param expand: Expand the abbreviated IP6 address. Default is ``False``.
-    :type expand: bool
     """
     print(get_ip6_address(c, interface_name, expand=expand))
 
 
-@task
+@task(help={
+    'list_all': "Lists all images (e.g. dependencies). By default only shows named images.",
+    'full_ids': "Shows the full ids. By default only shows the first 12 characters."
+})
 def list_images(c, list_all=False, full_ids=False):
     """
     Lists images on the Docker remote host, similar to ``docker images``.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param list_all: Lists all images (e.g. dependencies). Default is ``False``, only shows named images.
-    :type list_all: bool
-    :param full_ids: Shows the full ids. When ``False`` (default) only shows the first 12 characters.
-    :type full_ids: bool
     """
     images = docker_fabric(c).images(all=list_all)
     _format_output_table(images, IMAGE_COLUMNS, full_ids)
 
 
-@task
-def list_containers(c, list_all=True, short_image=True, full_ids=False, full_cmd=False):
+@task(help={
+    'list_all': "Shows all containers. By default omits exited containers.",
+    'long_image': "Shows the repository prefix, hidden by default for preserving space.",
+    'full_ids': "Shows the full ids. By default only shows the first 12 characters.",
+    'full_cmd': "Shows the full container command. By default only shows the first 25 characters."
+})
+def list_containers(c, list_all=False, long_image=False, full_ids=False, full_cmd=False):
     """
     Lists containers on the Docker remote host, similar to ``docker ps``.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param list_all: Shows all containers. Default is ``False``, which omits exited containers.
-    :type list_all: bool
-    :param short_image: Hides the repository prefix for preserving space. Default is ``True``.
-    :type short_image: bool
-    :param full_ids: Shows the full image ids. When ``False`` (default) only shows the first 12 characters.
-    :type full_ids: bool
-    :param full_cmd: Shows the full container command. When ``False`` (default) only shows the first 25 characters.
-    :type full_cmd: bool
     """
     containers = docker_fabric(c).containers(all=list_all)
-    _format_output_table(containers, CONTAINER_COLUMNS, full_ids, full_cmd, short_image)
+    _format_output_table(containers, CONTAINER_COLUMNS, full_ids, full_cmd, not long_image)
 
 
-@task
+@task(help={
+    'full_ids': "Shows the full network ids. By default only shows the first 12 characters.",
+})
 def list_networks(c, full_ids=False):
     """
     Lists networks on the Docker remote host, similar to ``docker network ls``.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param full_ids: Shows the full network ids. When ``False`` (default) only shows the first 12 characters.
-    :type full_ids: bool
     """
     networks = docker_fabric(c).networks()
     _format_output_table(networks, NETWORK_COLUMNS, full_ids)
@@ -174,97 +148,94 @@ def list_networks(c, full_ids=False):
 def list_volumes(c):
     """
     Lists volumes on the Docker remote host, similar to ``docker volume ls``.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
     """
     volumes = docker_fabric(c).volumes()['Volumes'] or ()
     _format_output_table(volumes, VOLUME_COLUMNS)
 
 
-@task
-def cleanup_containers(c, **kwargs):
+@task(help={
+    'include_initial': "Consider containers that have never been started.",
+    'exclude': "Comma-separated container names to exclude from the cleanup process.",
+    'list_only': "Only lists containers, but does not actually remove them."
+})
+def cleanup_containers(c, include_initial=False, exclude=None, list_only=False):
     """
     Removes all containers that have finished running. Similar to the ``prune`` functionality in newer Docker versions.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
     """
-    containers = docker_fabric(c).cleanup_containers(**kwargs)
-    if kwargs.get('list_only'):
+    if exclude and isinstance(exclude, str):
+        exclude = exclude.split(',')
+    containers = docker_fabric(c).cleanup_containers(include_initial=include_initial, exclude=exclude,
+                                                     list_only=list_only)
+    if list_only:
         print('Existing containers:')
         for c_id, c_name in containers:
             print('{0}  {1}'.format(c_id, c_name), end='\n')
 
 
-@task
-def cleanup_images(c, remove_old=False, **kwargs):
+@task(help={
+    'remove_old': "Also removes images that have repository names, but no 'latest' tag.",
+    'keep_tags': "Comma-separated enumeration of tags to not remove.",
+    'force': "If an image is referenced by multiple repositories, Docker by default will not remove the image. "
+             "This setting forces the removal.",
+    'list_only': "Only lists images, but does not actually remove them."
+})
+def cleanup_images(c, remove_old=False, keep_tags=None, force=False, list_only=False):
     """
     Removes all images that have no name, and that are not references as dependency by any other named image. Similar
     to the ``prune`` functionality in newer Docker versions, but supports more filters.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param remove_old: Also remove images that do have a name, but no `latest` tag.
-    :type remove_old: bool
     """
+    kwargs = dict(remove_old=remove_old, force=force, list_only=list_only)
     config = c.config.get('docker', {})
-    keep_tags = config.get('keep_tags')
-    if keep_tags is not None:
+    keep_tags = keep_tags or config.get('keep_tags')
+    if keep_tags:
+        if isinstance(keep_tags, str):
+            keep_tags = keep_tags.split(',')
         kwargs.setdefault('keep_tags', keep_tags)
-    removed_images = docker_fabric(c).cleanup_images(remove_old=remove_old, **kwargs)
-    if kwargs.get('list_only'):
+    removed_images = docker_fabric(c).cleanup_images(**kwargs)
+    if list_only:
         print('Unused images:')
         for image_name in removed_images:
             print(image_name, end='\n')
 
 
-@task
-def remove_all_containers(c, **kwargs):
+@task(help={
+    'stop_timeout': "Timeout to stopping each container.",
+    'list_only': "When set, only lists containers, but does not actually stop or remove them."
+})
+def remove_all_containers(c, stop_timeout=10, list_only=False):
     """
     Stops and removes all containers from the remote. Use with caution outside of a development environment!
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
     """
-    containers = docker_fabric(c).remove_all_containers(**kwargs)
-    if kwargs.get('list_only'):
+    containers = docker_fabric(c).remove_all_containers(stop_timeout=stop_timeout, list_only=list_only)
+    if list_only:
         print('Existing containers:')
         for c_id in containers[1]:
             print(c_id, end='\n')
 
 
-@task
+@task(help={
+    'image': "Image name or id.",
+    'filename': "File name to store the local file. If not provided, will use '<image>.tar.gz' in the current "
+                "working directory."
+})
 # FIXME: reactivate when available: @runs_once
 def save_image(c, image, filename=None):
     """
     Saves a Docker image from the remote to a local files. For performance reasons, uses the Docker command line client
     on the host, generates a gzip-tarball and downloads that.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param image: Image name or id.
-    :type image: unicode | str
-    :param filename: File name to store the local file. If not provided, will use ``<image>.tar.gz`` in the current
-      working directory.
-    :type filename: unicode | str
     """
     local_name = filename or '{0}.tar.gz'.format(image)
     cli.save_image(c, image, local_name)
 
 
-@task
+@task(help={
+    'filename': "Local file name.",
+    'timeout': "Timeout in seconds to set temporarily for the upload."
+})
 def load_image(c, filename, timeout=120):
     """
     Uploads an image from a local file to a Docker remote. Note that this temporarily has to extend the service timeout
     period.
-
-    :param c: Fabric connection.
-    :type c: fabric.connection.Connection
-    :param filename: Local file name.
-    :type filename: unicode | str
-    :param timeout: Timeout in seconds to set temporarily for the upload.
-    :type timeout: int
     """
     df = docker_fabric(c)
     with open(expand_path(filename), 'r') as f:
