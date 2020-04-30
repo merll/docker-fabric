@@ -7,7 +7,7 @@ import posixpath
 from dockermap.api import USE_HC_MERGE
 from dockermap.client.cli import (DockerCommandLineOutput, parse_containers_output, parse_inspect_output,
                                   parse_images_output, parse_version_output, parse_top_output, parse_networks_output,
-                                  parse_volumes_output)
+                                  parse_volumes_output, parse_info_output)
 from dockermap.client.docker_util import DockerUtilityMixin
 from dockermap.map.config.client import ClientConfiguration
 from dockermap.shortcuts import chmod, chown, targz, mkdir
@@ -247,6 +247,12 @@ class DockerCliClient(DockerUtilityMixin):
         res = self._call(cmd_str, quiet=True)
         version_dict = parse_version_output(res)
         return version_dict
+
+    def info(self):
+        cmd_str = self._out.get_cmd('info')
+        res = self._call(cmd_str, quiet=True)
+        info_dict = parse_info_output(res)
+        return info_dict
 
     def push_log(self, info, level, *args, **kwargs):
         pass

@@ -58,6 +58,14 @@ def _format_output_table(data_dict, columns, full_ids=False, full_cmd=False, sho
     print('', flush=True)
 
 
+def _format_info(output):
+    col_len = max(map(len, output.keys())) + 1
+    print('')
+    for k, v in six.iteritems(output):
+        print('{0:{1}} {2}'.format(''.join((k, ':')), col_len, v), end='\n', flush=False)
+    print('', flush=True)
+
+
 @task(help={
     'use_sudo': "Use 'sudo' command. As Docker-Fabric does not run 'socat' with 'sudo', this is by default not set. "
                 "It could unintentionally remove instances from other users."
@@ -79,11 +87,16 @@ def version(c):
     Shows version information of the remote Docker service, similar to 'docker version'.
     """
     output = docker_fabric(c).version()
-    col_len = max(map(len, output.keys())) + 1
-    print('')
-    for k, v in six.iteritems(output):
-        print('{0:{1}} {2}'.format(''.join((k, ':')), col_len, v), end='\n', flush=False)
-    print('', flush=True)
+    _format_info(output)
+
+
+@task
+def info(c):
+    """
+    Shows configuration and environment information of the remote Docker service, similar to 'docker info'.
+    """
+    output = docker_fabric(c).info()
+    _format_info(output)
 
 
 @task(help={
